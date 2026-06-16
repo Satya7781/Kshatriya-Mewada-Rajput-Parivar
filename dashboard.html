@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-en="My Dashboard - Kshatriya Mewada Rajput Parivar" data-hi="मेरा डैशबोर्ड - क्षत्रिय मेवाड़ा राजपूत परिवार">My Dashboard - Kshatriya Mewada Rajput Parivar</title>
+    <!-- CSS Design System Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <!-- Guard Overlay for guest/unauthenticated access -->
+    <div id="guard-overlay" style="display: none; position: fixed; inset: 0; background: var(--color-cream); z-index: 3000; align-items: center; justify-content: center; text-align: center; padding: 24px;">
+        <div style="background: var(--color-white); border: 8px double var(--color-maroon); border-radius: var(--border-radius-lg); padding: 48px 32px; max-width: 500px; width: 100%; box-shadow: var(--box-shadow-lg); position: relative; background-image: radial-gradient(circle at 50% 0%, rgba(197, 165, 90, 0.08) 0%, transparent 60%);">
+            <div style="position: absolute; inset: 4px; border: 2px solid var(--color-gold); pointer-events: none;"></div>
+            <div style="font-size: 52px; color: var(--color-maroon); margin-bottom: 20px;">🔒</div>
+            <h2 style="font-family: 'Playfair Display', serif; font-size: 28px; color: var(--color-maroon); margin-bottom: 12px;" data-en="Verified Access Only" data-hi="केवल सत्यापित पहुंच">Verified Access Only</h2>
+            <p style="color: var(--color-text-muted); font-size: 16px; line-height: 1.6; margin-bottom: 32px;" data-en="This dashboard is reserved for verified family members. Please log in from the home page." data-hi="यह डैशबोर्ड सत्यापित परिवार के सदस्यों के लिए आरक्षित है। कृपया मुख्य पृष्ठ से लॉगिन करें।">This dashboard is reserved for verified family members. Please log in from the home page.</p>
+            <a href="index.html" class="btn-large btn-primary" style="width: 100%;">
+                <i data-lucide="home"></i>
+                <span data-en="Go to Home Page" data-hi="मुख्य पृष्ठ पर जाएं">Go to Home Page</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- ============================================ -->
+    <!-- FIXED HEADER -->
+    <!-- ============================================ -->
+    <header class="fixed-header">
+        <div class="rajput-border-thick"></div>
+        <div class="header-container">
+            <!-- Logo Section -->
+            <a href="index.html" class="logo-section">
+                <div class="logo-badge">K</div>
+                <div class="logo-text">
+                    <span class="logo-title" data-en="Kshatriya Mewada Rajput Parivar" data-hi="क्षत्रिय मेवाड़ा राजपूत परिवार">Kshatriya Mewada Rajput Parivar</span>
+                    <span class="logo-subtitle" data-en="Uniting Our Families" data-hi="हमारे परिवारों का मिलन">Uniting Our Families</span>
+                </div>
+            </a>
+
+            <!-- Navigation Menu (Uncongested, Professional Layout) -->
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="index.html" class="nav-link" data-en="Home" data-hi="होम">Home</a></li>
+                    <li><a href="profiles.html" class="nav-link" data-en="Find Matches" data-hi="साथी खोजें">Find Matches</a></li>
+                    <li><a href="dashboard.html" class="nav-link active" data-en="My Dashboard" data-hi="मेरा डैशबोर्ड">My Dashboard</a></li>
+                </ul>
+            </nav>
+
+            <!-- Language Switcher and Actions -->
+            <div class="header-actions">
+                <div class="lang-toggle-container">
+                    <button class="lang-btn active" id="lang-en-btn" onclick="toggleLanguage('en')">EN</button>
+                    <button class="lang-btn" id="lang-hi-btn" onclick="toggleLanguage('hi')">हिंदी</button>
+                </div>
+                
+                <!-- Authenticated User Profile Summary -->
+                <div class="user-profile-summary" style="display: flex; align-items: center; gap: 10px; border-left: 1px solid var(--color-gold); padding-left: 16px;">
+                    <img src="https://picsum.photos/seed/arjun-singh/100/100.jpg" alt="User Avatar" style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--color-gold); object-fit: cover;">
+                    <div style="display: flex; flex-direction: column; text-align: left;">
+                        <span style="font-size: 14px; font-weight: 700; color: var(--color-maroon);" data-en="Kunwar Arjun Mewada" data-hi="कुंवर अर्जुन मेवाड़ा">Kunwar Arjun Mewada</span>
+                        <span style="font-size: 11px; font-weight: 600; color: var(--color-saffron); text-transform: uppercase;" data-en="Profile: 85% Done" data-hi="प्रोफ़ाइल: 85% पूर्ण">Profile: 85% Done</span>
+                    </div>
+                </div>
+
+                <!-- Log Out action -->
+                <button class="btn-large btn-outline" style="min-height: 44px; padding: 6px 18px; font-size: 14px;" data-en="Log Out" data-hi="लॉग आउट" onclick="handleLogout()">Log Out</button>
+
+                <!-- Mobile Menu Button -->
+                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+                    <i data-lucide="menu" style="width: 32px; height: 32px;"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Drawer Navigation -->
+    <div class="mobile-menu-drawer" id="mobile-drawer">
+        <ul class="mobile-nav-list">
+            <li><a href="index.html" class="mobile-nav-link" data-en="🏠 Home" data-hi="🏠 होम" onclick="toggleMobileMenu()">🏠 Home</a></li>
+            <li><a href="profiles.html" class="mobile-nav-link" data-en="🔍 Find Matches" data-hi="🔍 साथी खोजें" onclick="toggleMobileMenu()">🔍 Find Matches</a></li>
+            <li><a href="dashboard.html" class="mobile-nav-link" data-en="👥 My Dashboard" data-hi="👥 मेरा डैशबोर्ड" onclick="toggleMobileMenu()">👥 My Dashboard</a></li>
+        </ul>
+        <div class="mobile-actions">
+            <button class="btn-large btn-outline" data-en="Log Out" data-hi="लॉग आउट" onclick="toggleMobileMenu(); handleLogout()">Log Out</button>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- HERO SECTION (USER DASHBOARD WELCOME) -->
+    <!-- ============================================ -->
+    <section class="hero-section" id="hero" style="background-image: url('images/ram_sita_vivah.png'); min-height: 420px; padding-top: 110px;">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <!-- Alert Badge -->
+            <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(197, 165, 90, 0.2); border: 1px solid var(--color-gold); padding: 8px 16px; border-radius: var(--border-radius-round); margin-bottom: 20px;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--color-gold); display: inline-block;"></span>
+                <span style="font-size: 13px; font-weight: 700; text-transform: uppercase; color: var(--color-gold); letter-spacing: 1px;" data-en="My Parivar Workspace" data-hi="मेरा परिवार कार्यक्षेत्र">My Parivar Workspace</span>
+            </div>
+
+            <!-- Welcome Headers -->
+            <h1 class="hero-title" style="font-size: 38px;" data-en="Welcome to Your Profile Dashboard" data-hi="आपके प्रोफाइल डैशबोर्ड में आपका स्वागत है">Welcome to Your Profile Dashboard</h1>
+            <p class="hero-desc" data-en="Preserving Our Lineage, Uniting Our Families" data-hi="अपने वंश की रक्षा, अपने परिवारों का मिलन">Preserving Our Lineage, Uniting Our Families</p>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- DASHBOARD QUICK INFO GRID -->
+    <!-- ============================================ -->
+    <section class="dashboard-grid-section">
+        <div class="stats-grid">
+            <!-- Stat 1: Profile Views -->
+            <div class="stat-card">
+                <div class="stat-icon-wrapper">
+                    <i data-lucide="eye" style="width: 32px; height: 32px;"></i>
+                </div>
+                <div class="stat-card-info">
+                    <span class="stat-card-number">142</span>
+                    <span class="stat-card-label" data-en="Profile Views" data-hi="प्रोफ़ाइल व्यूज़">Profile Views</span>
+                </div>
+            </div>
+
+            <!-- Stat 2: Interests Received -->
+            <div class="stat-card saffron">
+                <div class="stat-icon-wrapper">
+                    <i data-lucide="heart" style="width: 32px; height: 32px;"></i>
+                </div>
+                <div class="stat-card-info">
+                    <span class="stat-card-number" id="interests-count-val">28</span>
+                    <span class="stat-card-label" data-en="Interests Received" data-hi="प्राप्त रुचियाँ">Interests Received</span>
+                </div>
+            </div>
+
+            <!-- Stat 3: New Matches -->
+            <div class="stat-card gold">
+                <div class="stat-icon-wrapper">
+                    <i data-lucide="sparkles" style="width: 32px; height: 32px;"></i>
+                </div>
+                <div class="stat-card-info">
+                    <span class="stat-card-number">12</span>
+                    <span class="stat-card-label" data-en="New Matches" data-hi="नए मैच">New Matches</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- INTERACTIVE SECTION: RAJPUT BIO-DATA GENERATOR -->
+    <!-- ============================================ -->
+    <section class="biodata-section" id="biodata">
+        <div class="biodata-panel">
+            <div class="biodata-header">
+                <h2 data-en="Rajput Matrimonial Bio-Data Editor" data-hi="राजपूत विवाह बायो-डेटा संपादक">Rajput Matrimonial Bio-Data Editor</h2>
+                <p data-en="Edit your personal details below. Changes reflect on your traditional bio-data sheet in real-time." data-hi="नीचे अपना व्यक्तिगत विवरण संपादित करें। आपके पारंपरिक बायो-डेटा पत्रक पर वास्तविक समय में परिवर्तन दिखाई देंगे।">Edit your personal details below. Changes reflect on your traditional bio-data sheet in real-time.</p>
+            </div>
+            
+            <div class="biodata-body">
+                <!-- Form Inputs Panel -->
+                <div class="biodata-form-panel">
+                    <div style="border-bottom: 2px solid var(--color-gold-light); padding-bottom: 8px;">
+                        <h4 style="color: var(--color-maroon); font-size: 18px;" data-en="Edit Profile Details" data-hi="प्रोफ़ाइल विवरण संपादित करें">Edit Profile Details</h4>
+                    </div>
+
+                    <!-- Inputs -->
+                    <div>
+                        <label class="label-large" data-en="Full Name" data-hi="पूरा नाम">Full Name</label>
+                        <input type="text" class="input-large" id="bio-fullname" value="Kunwar Arjun Mewada" oninput="updateBioDataPreview()">
+                    </div>
+
+                    <div class="biodata-form-row">
+                        <div>
+                            <label class="label-large" data-en="Date of Birth" data-hi="जन्म तिथि">Date of Birth</label>
+                            <input type="date" class="input-large" id="bio-dob" value="1999-04-12" oninput="updateBioDataPreview()">
+                        </div>
+                        <div>
+                            <label class="label-large" data-en="Height" data-hi="ऊंचाई">Height</label>
+                            <select class="input-large" id="bio-height" onchange="updateBioDataPreview()">
+                                <option value="5'5&quot;">5'5"</option>
+                                <option value="5'7&quot;">5'7"</option>
+                                <option value="5'10&quot;" selected>5'10"</option>
+                                <option value="6'0&quot;">6'0"</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="biodata-form-row">
+                        <div>
+                            <label class="label-large" data-en="Gotra (Self)" data-hi="गोत्र (स्वयं)">Gotra (Self)</label>
+                            <input type="text" class="input-large" id="bio-gotra-self" value="Mewada" oninput="updateBioDataPreview()">
+                        </div>
+                        <div>
+                            <label class="label-large" data-en="Gotra (Mother)" data-hi="गोत्र (माता)">Gotra (Mother)</label>
+                            <input type="text" class="input-large" id="bio-gotra-mother" value="Rathore" oninput="updateBioDataPreview()">
+                        </div>
+                    </div>
+
+                    <div class="biodata-form-row">
+                        <div>
+                            <label class="label-large" data-en="Education" data-hi="शिक्षा">Education</label>
+                            <input type="text" class="input-large" id="bio-education" value="B.Tech Computer Science" oninput="updateBioDataPreview()">
+                        </div>
+                        <div>
+                            <label class="label-large" data-en="Profession" data-hi="व्यवसाय">Profession</label>
+                            <input type="text" class="input-large" id="bio-profession" value="Software Engineer" oninput="updateBioDataPreview()">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="label-large" data-en="Ancestral Village" data-hi="पैतृक गाँव">Ancestral Village</label>
+                        <input type="text" class="input-large" id="bio-village" value="Gogunda, Udaipur" oninput="updateBioDataPreview()">
+                    </div>
+
+                    <div>
+                        <label class="label-large" data-en="Contact Number" data-hi="संपर्क नंबर">Contact Number</label>
+                        <input type="text" class="input-large" id="bio-contact" value="+91 98765 43210" oninput="updateBioDataPreview()">
+                    </div>
+
+                    <div style="display: flex; gap: 12px; margin-top: 12px;">
+                        <button class="btn-large btn-primary" style="flex: 1;" onclick="saveProfileChanges()">
+                            <i data-lucide="save"></i>
+                            <span data-en="Save Changes" data-hi="परिवर्तन सुरक्षित करें">Save Changes</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Live Preview Panel -->
+                <div class="biodata-preview-panel">
+                    <div class="biodata-print-card" id="biodata-card">
+                        <div class="biodata-print-header">
+                            <div class="biodata-print-symbol">॥ श्री गणेशाय नमः ॥</div>
+                            <div class="biodata-print-title" data-en="Matrimonial Bio-Data" data-hi="वैवाहिक बायो-डेटा">Matrimonial Bio-Data</div>
+                            <div class="biodata-print-subtitle" data-en="Kshatriya Mewada Rajput" data-hi="क्षत्रिय मेवाड़ा राजपूत">Kshatriya Mewada Rajput</div>
+                        </div>
+
+                        <!-- User Image -->
+                        <div class="biodata-print-avatar-wrap">
+                            <img src="https://picsum.photos/seed/arjun-singh/200/200.jpg" alt="Matrimonial Avatar" class="biodata-print-avatar" id="preview-avatar">
+                        </div>
+
+                        <!-- Personal Details -->
+                        <div class="biodata-print-section-title" data-en="Personal Details" data-hi="व्यक्तिगत विवरण">Personal Details</div>
+                        <div class="biodata-print-grid">
+                            <div class="biodata-print-label" data-en="Name" data-hi="नाम">Name:</div>
+                            <div class="biodata-print-value" id="prev-name">Kunwar Arjun Mewada</div>
+                            
+                            <div class="biodata-print-label" data-en="Birth Date" data-hi="जन्म तिथि">Birth Date:</div>
+                            <div class="biodata-print-value" id="prev-dob">12 April 1999</div>
+
+                            <div class="biodata-print-label" data-en="Height" data-hi="ऊंचाई">Height:</div>
+                            <div class="biodata-print-value" id="prev-height">5'10"</div>
+                        </div>
+
+                        <!-- Gotra Details -->
+                        <div class="biodata-print-section-title" data-en="Gotra & Family Lineage" data-hi="गोत्र एवं पारिवारिक वंश">Gotra & Family Lineage</div>
+                        <div class="biodata-print-grid">
+                            <div class="biodata-print-label" data-en="Self Gotra" data-hi="स्वयं गोत्र">Self Gotra:</div>
+                            <div class="biodata-print-value" id="prev-gotra-self">Mewada</div>
+                            
+                            <div class="biodata-print-label" data-en="Mother Gotra" data-hi="माता गोत्र">Mother Gotra:</div>
+                            <div class="biodata-print-value" id="prev-gotra-mother">Rathore</div>
+
+                            <div class="biodata-print-label" data-en="Native Place" data-hi="मूल स्थान">Native Place:</div>
+                            <div class="biodata-print-value" id="prev-village">Gogunda, Udaipur</div>
+                        </div>
+
+                        <!-- Career & Contact -->
+                        <div class="biodata-print-section-title" data-en="Education & Career" data-hi="शिक्षा एवं व्यवसाय">Education & Career</div>
+                        <div class="biodata-print-grid">
+                            <div class="biodata-print-label" data-en="Education" data-hi="शिक्षा">Education:</div>
+                            <div class="biodata-print-value" id="prev-education">B.Tech Computer Science</div>
+                            
+                            <div class="biodata-print-label" data-en="Profession" data-hi="व्यवसाय">Profession:</div>
+                            <div class="biodata-print-value" id="prev-profession">Software Engineer</div>
+
+                            <div class="biodata-print-label" data-en="Contact" data-hi="संपर्क">Contact:</div>
+                            <div class="biodata-print-value" id="prev-contact">+91 98765 43210</div>
+                        </div>
+                    </div>
+
+                    <!-- Print Button -->
+                    <div class="biodata-actions">
+                        <button class="btn-large btn-secondary" onclick="printBioData()">
+                            <i data-lucide="printer"></i>
+                            <span data-en="Print Bio-Data" data-hi="बायो-डेटा प्रिंट करें">Print Bio-Data</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- CULTURAL VALUES -->
+    <!-- ============================================ -->
+    <section class="values-strip" style="background: linear-gradient(135deg, var(--color-saffron), var(--color-maroon));">
+        <div class="values-container">
+            <h2 class="values-title" data-en="Core Pillars of Our Culture" data-hi="हमारी संस्कृति के मुख्य स्तंभ">Core Pillars of Our Culture</h2>
+            <div class="values-grid">
+                <div class="value-item">
+                    <div class="value-emoji">⚔️</div>
+                    <div class="value-name-hi">वीरता</div>
+                    <div class="value-name-en">Veerta (Bravery)</div>
+                </div>
+                <div class="value-item">
+                    <div class="value-emoji">🙏</div>
+                    <div class="value-name-hi">सम्मान</div>
+                    <div class="value-name-en">Samman (Respect)</div>
+                </div>
+                <div class="value-item">
+                    <div class="value-emoji">🤝</div>
+                    <div class="value-name-hi">विश्वास</div>
+                    <div class="value-name-en">Vishwas (Trust)</div>
+                </div>
+                <div class="value-item">
+                    <div class="value-emoji">🏛️</div>
+                    <div class="value-name-hi">परम्परा</div>
+                    <div class="value-name-en">Parampara (Tradition)</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- FOOTER -->
+    <!-- ============================================ -->
+    <footer class="custom-footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <div class="logo-section">
+                    <div class="logo-badge">K</div>
+                    <div class="logo-text">
+                        <span class="logo-title" style="color: var(--color-gold);" data-en="Kshatriya Mewada" data-hi="क्षत्रिय मेवाड़ा">Kshatriya Mewada</span>
+                        <span class="logo-subtitle" style="color: var(--color-white);" data-en="Rajput Parivar" data-hi="राजपूत परिवार">Rajput Parivar</span>
+                    </div>
+                </div>
+                <p class="footer-brand-desc" data-en="A dedicated family matrimony portal preserving heritage and building relationships based on values, trust, and tradition." data-hi="मूल्यों, विश्वास और परंपरा पर आधारित रिश्तों का निर्माण करने और विरासत की रक्षा करने वाला एक समर्पित पारिवारिक विवाह पोर्टल।">A dedicated family matrimony portal preserving heritage and building relationships based on values, trust, and tradition.</p>
+            </div>
+
+            <div>
+                <h3 class="footer-heading" data-en="Quick Links" data-hi="त्वरित संपर्क">Quick Links</h3>
+                <ul class="footer-links">
+                    <li><a href="index.html" class="footer-link" data-en="Home" data-hi="होम">Home</a></li>
+                    <li><a href="profiles.html" class="footer-link" data-en="Partner Search" data-hi="साथी खोज">Partner Search</a></li>
+                    <li><a href="dashboard.html" class="footer-link" data-en="My Dashboard" data-hi="मेरा डैशबोर्ड">My Dashboard</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h3 class="footer-heading" data-en="Support" data-hi="सहायता">Support</h3>
+                <ul class="footer-links">
+                    <li><a href="#" class="footer-link" data-en="Help Center" data-hi="सहायता केंद्र">Help Center</a></li>
+                    <li><a href="#" class="footer-link" data-en="Privacy Policy" data-hi="गोपनीयता नीति">Privacy Policy</a></li>
+                    <li><a href="#" class="footer-link" data-en="Terms of Service" data-hi="सेवा की शर्तें">Terms of Service</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h3 class="footer-heading" data-en="Contact Us" data-hi="संपर्क करें">Contact Us</h3>
+                <div class="footer-contact-info">
+                    <div class="footer-contact-item">
+                        <i data-lucide="map-pin"></i>
+                        <span data-en="Mewar Heritage Center, Udaipur, Rajasthan" data-hi="मेवाड़ विरासत केंद्र, उदयपुर, राजस्थान">Mewar Heritage Center, Udaipur, Rajasthan</span>
+                    </div>
+                    <div class="footer-contact-item">
+                        <i data-lucide="phone"></i>
+                        <span>+91 294 242 8000</span>
+                    </div>
+                    <div class="footer-contact-item">
+                        <i data-lucide="mail"></i>
+                        <span>support@mewadrajputparivar.org</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-tagline-bar">
+            <div class="rajput-border-thick" style="margin-bottom: 24px;"></div>
+            <div class="footer-tagline" data-en="Jai Mewar • Jai Kshatriya • Jai Rajputana" data-hi="जय मेवाड़ • जय क्षत्रिय • जय राजपूताना">Jai Mewar • Jai Kshatriya • Jai Rajputana</div>
+            <div class="footer-copyright">
+                &copy; 2026 Kshatriya Mewada Rajput Parivar. <span data-en="All Rights Reserved." data-hi="सर्वाधिकार सुरक्षित।">All Rights Reserved.</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- CSS Print Styles to isolate bio-data card when printed -->
+    <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #biodata-card, #biodata-card * {
+                visibility: visible;
+            }
+            #biodata-card {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-shadow: none !important;
+                border: 12px double #800020 !important;
+                background-color: #FFFDF7 !important;
+                padding: 40px !important;
+            }
+            html, body {
+                background: white !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+        }
+    </style>
+
+    <!-- JS Scripts -->
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

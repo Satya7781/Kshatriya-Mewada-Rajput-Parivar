@@ -1,0 +1,407 @@
+/* ==========================================================================
+   APPLICATION LOGIC FOR KSHATRIYA MEWADA RAJPUT PARIVAR - PUBLIC WEBSITE
+   ========================================================================== */
+
+// Global State
+let currentLang = sessionStorage.getItem('preferredLang') || 'en';
+let isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+
+// Mock Preview Dataset for Homepage Featured Section
+const featuredMatches = [
+    {
+        id: 108,
+        name: { en: "Animesh Mewada", hi: "अनिमेष मेवाड़ा" },
+        shortName: { en: "Animesh M.", hi: "अनिमेष एम." },
+        gender: "Groom",
+        gotraSelf: { en: "Sisodiya", hi: "सिसोदिया" },
+        gotraMother: { en: "Bordiya", hi: "बोरदिया" },
+        age: 21,
+        height: "5'11\"",
+        education: { en: "B.Com (Computer), DCA, MBA (Pursuing)", hi: "बी.कॉम (कंप्यूटर), डीसीए, एमबीए (प्रगति पर)" },
+        profession: { en: "Private Job", hi: "प्राइवेट जॉब" },
+        district: { en: "Bhopal", hi: "भोपाल" },
+        community: "Mewada",
+        verified: true,
+        image: "images/animesh.jpeg"
+    },
+    {
+        id: 102,
+        name: { en: "Sarvesh Rajput", hi: "सर्वेश राजपूत" },
+        shortName: { en: "Sarvesh R.", hi: "सर्वेश आर." },
+        gender: "Groom",
+        gotraSelf: { en: "Dod", hi: "डोड" },
+        gotraMother: { en: "Rathore", hi: "राठौड़" },
+        age: 23,
+        height: "5'7\"",
+        education: { en: "Second Year", hi: "द्वितीय वर्ष" },
+        profession: { en: "Bajaj Collection Agent", hi: "बजाज कलेक्शन एजेंट" },
+        district: { en: "Bhopal", hi: "भोपाल" },
+        community: "Rajput",
+        verified: true,
+        image: "images/sarvesh.jpeg"
+    },
+    {
+        id: 109,
+        name: { en: "Rohit Mewada", hi: "रोहित मेवाड़ा" },
+        shortName: { en: "Rohit M.", hi: "रोहित एम." },
+        gender: "Groom",
+        gotraSelf: { en: "Pathariya", hi: "पथरिया" },
+        gotraMother: { en: "Sisodiya", hi: "सिसोदिया" },
+        age: 22,
+        height: "5'10\"",
+        education: { en: "Competitive Exam Aspirant", hi: "प्रतियोगी परीक्षा आकांक्षी" },
+        profession: { en: "Student", hi: "छात्र" },
+        district: { en: "Bhopal", hi: "भोपाल" },
+        community: "Mewada",
+        verified: true,
+        image: "images/rohit.jpeg"
+    }
+];
+
+// Initialize Elements on DOM Load
+document.addEventListener("DOMContentLoaded", () => {
+    // Initialise Lucide icons
+    lucide.createIcons();
+
+    // Trigger Count Up Animation for Hero Section Stats
+    animateCountValue("count-profiles", 0, 8500, 1500, "+");
+    animateCountValue("count-unions", 0, 1200, 1500, "+");
+    animateCountValue("count-families", 0, 10000, 1500, "+");
+
+    // Align header items based on login state
+    applySessionStateUI();
+
+    // Apply language on load
+    applyLanguage(currentLang, false);
+});
+
+// ============================================
+// SESSION STATE LAYOUT TOGGLING
+// ============================================
+function applySessionStateUI() {
+    isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+
+    const guestActions = document.getElementById("guest-actions");
+    const userActions = document.getElementById("user-actions");
+    const navDashboard = document.getElementById("nav-dashboard-item");
+    const footerDashboard = document.getElementById("footer-dashboard-item");
+    
+    const mobileGuest = document.getElementById("mobile-guest-actions");
+    const mobileUser = document.getElementById("mobile-user-actions");
+    const mobileNavDashboard = document.getElementById("mobile-nav-dashboard");
+
+    if (isLoggedIn) {
+        if (guestActions) guestActions.style.display = "none";
+        if (userActions) userActions.style.display = "flex";
+        if (navDashboard) navDashboard.style.display = "block";
+        if (footerDashboard) footerDashboard.style.display = "block";
+
+        if (mobileGuest) mobileGuest.style.display = "none";
+        if (mobileUser) mobileUser.style.display = "block";
+        if (mobileNavDashboard) mobileNavDashboard.style.display = "block";
+    } else {
+        if (guestActions) guestActions.style.display = "flex";
+        if (userActions) userActions.style.display = "none";
+        if (navDashboard) navDashboard.style.display = "none";
+        if (footerDashboard) footerDashboard.style.display = "none";
+
+        if (mobileGuest) mobileGuest.style.display = "block";
+        if (mobileUser) mobileUser.style.display = "none";
+        if (mobileNavDashboard) mobileNavDashboard.style.display = "none";
+    }
+}
+
+// ============================================
+// GLOBAL LANGUAGE TOGGLE ENGINE
+// ============================================
+function applyLanguage(lang, showToastNotification = true) {
+    currentLang = lang;
+    sessionStorage.setItem('preferredLang', lang);
+
+    // Toggle active class on header buttons
+    const enBtn = document.getElementById("lang-en-btn");
+    const hiBtn = document.getElementById("lang-hi-btn");
+    if (enBtn && hiBtn) {
+        if (lang === 'hi') {
+            enBtn.classList.remove("active");
+            hiBtn.classList.add("active");
+            document.body.classList.add("lang-hi");
+        } else {
+            hiBtn.classList.remove("active");
+            enBtn.classList.add("active");
+            document.body.classList.remove("lang-hi");
+        }
+    }
+
+    // Translate marked static text tags
+    document.querySelectorAll('[data-en]').forEach(el => {
+        const textEn = el.getAttribute('data-en');
+        const textHi = el.getAttribute('data-hi');
+        el.innerText = lang === 'hi' ? textHi : textEn;
+    });
+
+    // Translate input placeholders
+    document.querySelectorAll('[data-placeholder-en]').forEach(el => {
+        const placeholderEn = el.getAttribute('data-placeholder-en');
+        const placeholderHi = el.getAttribute('data-placeholder-hi');
+        el.placeholder = lang === 'hi' ? placeholderHi : placeholderEn;
+    });
+
+    // Render/Refresh Featured Matches in the selected language
+    renderFeaturedMatches();
+
+    // Trigger toast notification
+    if (showToastNotification) {
+        const toastMsg = lang === 'hi' ? 'भाषा बदलकर हिंदी कर दी गई है।' : 'Language switched to English.';
+        showToast(toastMsg, 'info');
+    }
+}
+
+function toggleLanguage(lang) {
+    applyLanguage(lang, true);
+}
+
+// ============================================
+// COUNTER ANIMATION
+// ============================================
+function animateCountValue(id, start, end, duration, suffix = "") {
+    const obj = document.getElementById(id);
+    if (!obj) return;
+    
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const currentValue = Math.floor(progress * (end - start) + start);
+        obj.innerHTML = currentValue.toLocaleString() + suffix;
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        }
+    };
+    window.requestAnimationFrame(step);
+}
+
+// ============================================
+// MOBILE NAVIGATION DRAWER
+// ============================================
+function toggleMobileMenu() {
+    const drawer = document.getElementById("mobile-drawer");
+    if (drawer) {
+        drawer.classList.toggle("active");
+    }
+}
+
+// ============================================
+// TOAST NOTIFICATIONS
+// ============================================
+function showToast(message, type = 'info') {
+    const container = document.getElementById("toast-container");
+    if (!container) return;
+
+    const toast = document.createElement("div");
+    toast.className = `toast ${type}`;
+    
+    let iconName = 'info';
+    if (type === 'success') iconName = 'check-circle';
+    if (type === 'error') iconName = 'alert-triangle';
+
+    toast.innerHTML = `
+        <i data-lucide="${iconName}"></i>
+        <span>${message}</span>
+    `;
+
+    container.appendChild(toast);
+    lucide.createIcons({ attrs: { class: 'toast-icon' } });
+
+    setTimeout(() => {
+        toast.style.animation = 'toast-slide-in 0.3s ease-out reverse forwards';
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, 3200);
+}
+
+// ============================================
+// POPUP AUTH MODAL ACTIONS (LOGIN & REGISTER)
+// ============================================
+function openAuthModal(tab = 'login') {
+    const modal = document.getElementById("auth-modal");
+    if (modal) {
+        modal.classList.add("active");
+        toggleModalTab(tab);
+    }
+}
+
+function closeAuthModal() {
+    const modal = document.getElementById("auth-modal");
+    if (modal) {
+        modal.classList.remove("active");
+    }
+}
+
+function toggleModalTab(tab) {
+    const tabLogin = document.getElementById("tab-login");
+    const tabRegister = document.getElementById("tab-register");
+    const formLogin = document.getElementById("form-login-content");
+    const formRegister = document.getElementById("form-register-content");
+
+    if (tab === 'login') {
+        tabLogin.classList.add("active");
+        tabRegister.classList.remove("active");
+        formLogin.style.display = "flex";
+        formRegister.style.display = "none";
+    } else {
+        tabRegister.classList.add("active");
+        tabLogin.classList.remove("active");
+        formRegister.style.display = "flex";
+        formLogin.style.display = "none";
+    }
+}
+
+// Submit mock auth handlers
+function submitMockLogin() {
+    const number = document.getElementById("login-phone").value;
+    if (!number) {
+        showToast(currentLang === 'hi' ? 'कृपया मोबाइल नंबर दर्ज करें।' : 'Please enter your mobile number.', 'error');
+        return;
+    }
+
+    showToast(currentLang === 'hi' ? 'क्रेडेंशियल सत्यापित हो रहे हैं...' : 'Verifying family credentials...', 'info');
+
+    setTimeout(() => {
+        sessionStorage.setItem('isLoggedIn', 'true');
+        closeAuthModal();
+        applySessionStateUI();
+        showToast(currentLang === 'hi' ? 'सत्यापन सफल! प्रवेश किया जा रहा है...' : 'Verification successful! Redirecting...', 'success');
+        setTimeout(() => {
+            window.location.href = "dashboard.html";
+        }, 800);
+    }, 1000);
+}
+
+function submitMockRegister() {
+    showToast(currentLang === 'hi' ? 'सफलतापूर्वक पंजीकृत! अपने क्रेडेंशियल के साथ लॉगिन करें।' : 'Registered successfully! Please login with your credentials.', 'success');
+    setTimeout(() => {
+        toggleModalTab('login');
+    }, 1000);
+}
+
+function handleLogout() {
+    sessionStorage.removeItem('isLoggedIn');
+    applySessionStateUI();
+    renderFeaturedMatches();
+    showToast(currentLang === 'hi' ? 'लॉग आउट किया गया।' : 'Logged out successfully.', 'info');
+}
+
+// ============================================
+// DYNAMIC FEATURED MATCHES RENDERER
+// ============================================
+function renderFeaturedMatches() {
+    const container = document.getElementById("featured-profiles-grid");
+    if (!container) return;
+
+    let html = "";
+    featuredMatches.forEach(profile => {
+        // Resolve display values based on session status (redacted for guests)
+        const nameVal = isLoggedIn 
+            ? (profile.name[currentLang] || profile.name['en'])
+            : (profile.shortName[currentLang] || profile.shortName['en']);
+
+        const gotraSelfVal = isLoggedIn
+            ? (profile.gotraSelf[currentLang] || profile.gotraSelf['en'])
+            : (currentLang === 'hi' ? '🔒 सत्यापित' : '🔒 Verified');
+
+        const gotraMotherVal = isLoggedIn
+            ? (profile.gotraMother[currentLang] || profile.gotraMother['en'])
+            : (currentLang === 'hi' ? '🔒 सत्यापित' : '🔒 Verified');
+
+        const eduVal = profile.education[currentLang] || profile.education['en'];
+        const distVal = profile.district[currentLang] || profile.district['en'];
+
+        // Labels
+        const ageLabel = currentLang === 'hi' ? 'आयु' : 'Age';
+        const heightLabel = currentLang === 'hi' ? 'ऊंचाई' : 'Height';
+        const gotraSelfLabel = currentLang === 'hi' ? 'गोत्र (स्वयं)' : 'Gotra (Self)';
+        const gotraMotherLabel = currentLang === 'hi' ? 'गोत्र (माता)' : 'Gotra (Mother)';
+        const eduLabel = currentLang === 'hi' ? 'शिक्षा' : 'Education';
+        const distLabel = currentLang === 'hi' ? 'जिला' : 'District';
+
+        // CTA Label
+        const ctaText = isLoggedIn
+            ? (currentLang === 'hi' ? 'रुचि भेजें' : 'Send Interest')
+            : (currentLang === 'hi' ? 'विवरण अनलॉक करें' : 'Unlock Details');
+
+        // Privacy Warning Subtext for guest view
+        const subtext = isLoggedIn 
+            ? "" 
+            : `<p style="font-size: 11px; font-weight: 600; color: var(--color-text-muted); margin-bottom: 12px; text-align: center; font-style: italic;">
+                 ${currentLang === 'hi' ? '🔒 गोत्र और परिवार विवरण छिपे हैं।' : '🔒 Gotra & family charts are hidden.'}
+               </p>`;
+
+        // Click actions
+        const clickAction = isLoggedIn
+            ? `handleSendInterestFeatured(this, ${profile.id}, '${nameVal}')`
+            : `openAuthModal('login')`;
+
+        html += `
+            <div class="profile-card">
+                <div class="profile-image-container">
+                    <img src="${profile.image}" class="profile-image" alt="${nameVal}">
+                    <div class="profile-badge">${currentLang === 'hi' ? (profile.gender === 'Bride' ? 'वधू (लड़की)' : 'वर (लड़का)') : profile.gender}</div>
+                    ${profile.verified ? `<div class="profile-verified-badge"><i data-lucide="shield-check" style="width: 16px; height: 16px;"></i><span>${currentLang === 'hi' ? 'सत्यापित' : 'Verified'}</span></div>` : ''}
+                </div>
+                <div class="profile-info">
+                    <h3 class="profile-name">${nameVal}</h3>
+                    <table class="profile-details-table">
+                        <tr>
+                            <td class="label-td">${ageLabel} / ${heightLabel}</td>
+                            <td class="val-td">${profile.age} yrs, ${profile.height}</td>
+                        </tr>
+                        <tr>
+                            <td class="label-td">${gotraSelfLabel}</td>
+                            <td class="val-td" style="color: ${isLoggedIn ? 'var(--color-text-dark)' : 'var(--color-saffron)'};">${gotraSelfVal}</td>
+                        </tr>
+                        <tr>
+                            <td class="label-td">${gotraMotherLabel}</td>
+                            <td class="val-td" style="color: ${isLoggedIn ? 'var(--color-text-dark)' : 'var(--color-saffron)'};">${gotraMotherVal}</td>
+                        </tr>
+                        <tr>
+                            <td class="label-td">${eduLabel}</td>
+                            <td class="val-td">${eduVal}</td>
+                        </tr>
+                        <tr>
+                            <td class="label-td">${distLabel}</td>
+                            <td class="val-td">${distVal}</td>
+                        </tr>
+                    </table>
+                    ${subtext}
+                    <button class="btn-large btn-primary ${isLoggedIn ? 'pulse-interest' : ''}" style="width: 100%;" onclick="${clickAction}">
+                        <i data-lucide="${isLoggedIn ? 'heart' : 'lock'}"></i>
+                        <span>${ctaText}</span>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+    lucide.createIcons();
+}
+
+function handleSendInterestFeatured(btn, profileId, name) {
+    if (btn.classList.contains("btn-secondary")) return;
+
+    btn.className = "btn-large btn-secondary";
+    btn.classList.remove("pulse-interest");
+    btn.innerHTML = `<i data-lucide="check"></i> <span>${currentLang === 'hi' ? 'रुचि भेजी गई ✓' : 'Interest Sent ✓'}</span>`;
+    lucide.createIcons();
+
+    // Increment interests received locally in sessionStorage for dashboard
+    let received = parseInt(sessionStorage.getItem('interestsCount')) || 28;
+    sessionStorage.setItem('interestsCount', received + 1);
+
+    const msg = currentLang === 'hi' 
+        ? `${name} के परिवार को विवाह संबंध की रुचि भेजी गई।` 
+        : `Marriage interest request sent to the family of ${name}.`;
+    showToast(msg, 'success');
+}
