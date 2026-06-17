@@ -615,25 +615,90 @@
             </div>
 
             <!-- Register Form Content -->
-            <div class="modal-form-content" id="form-register-content" style="display: none;">
-                <div class="form-group">
-                    <label class="label-large" data-en="Applicant's Full Name" data-hi="आवेदक का पूरा नाम">Applicant's
-                        Full Name</label>
-                    <input type="text" class="input-large" placeholder="E.g. Kunwar Pratap Chouhan"
-                        data-placeholder-en="E.g. Kunwar Pratap Chouhan" data-placeholder-hi="उदा. कुंवर प्रताप चौहान">
+            <div class="modal-form-content" id="form-register-content" style="display: none; gap: 12px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label class="label-large" data-en="Full Name" data-hi="पूरा नाम">Full Name</label>
+                        <input type="text" class="input-large" id="register-name" placeholder="E.g. Kunwar Pratap"
+                            data-placeholder-en="E.g. Kunwar Pratap" data-placeholder-hi="उदा. कुंवर प्रताप">
+                    </div>
+                    <div class="form-group">
+                        <label class="label-large" data-en="Gender" data-hi="लिंग">Gender</label>
+                        <select class="input-large" id="register-gender">
+                            <option value="Groom" data-en="Groom (Male)" data-hi="वर (पुरुष)">Groom (Male)</option>
+                            <option value="Bride" data-en="Bride (Female)" data-hi="वधू (स्त्री)">Bride (Female)</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="label-large" data-en="Gotra (Ancestry / Clan)" data-hi="गोत्र (वंश / कुल)">Gotra
-                        (Ancestry / Clan)</label>
-                    <input type="text" class="input-large" placeholder="E.g. Rathore" data-placeholder-en="E.g. Rathore"
-                        data-placeholder-hi="उदा. राठौड़">
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label class="label-large" data-en="Gotra (Self)" data-hi="गोत्र (स्वयं)">Gotra (Self)</label>
+                        <input type="text" class="input-large" id="register-gotra-self" placeholder="E.g. Rathore"
+                            data-placeholder-en="E.g. Rathore" data-placeholder-hi="उदा. राठौड़">
+                    </div>
+                    <div class="form-group">
+                        <label class="label-large" data-en="Gotra (Mother)" data-hi="गोत्र (माता)">Gotra (Mother)</label>
+                        <input type="text" class="input-large" id="register-gotra-mother" placeholder="E.g. Chouhan"
+                            data-placeholder-en="E.g. Chouhan" data-placeholder-hi="उदा. चौहान">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="label-large" data-en="Mobile Number" data-hi="मोबाइल नंबर">Mobile Number</label>
-                    <input type="tel" class="input-large" placeholder="Enter 10 digit number"
-                        data-placeholder-en="Enter 10 digit number" data-placeholder-hi="10 अंकों का नंबर दर्ज करें">
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label class="label-large" data-en="Date of Birth" data-hi="जन्म तिथि">Date of Birth</label>
+                        <input type="date" class="input-large" id="register-dob">
+                    </div>
+                    <div class="form-group">
+                        <label class="label-large" data-en="District" data-hi="जिला">District</label>
+                        <select class="input-large" id="register-district">
+                            <option value="Bhopal" data-en="Bhopal" data-hi="भोपाल">Bhopal</option>
+                            <option value="Sehore" data-en="Sehore" data-hi="सीहोर">Sehore</option>
+                            <option value="Rajgarh" data-en="Rajgarh" data-hi="राजगढ़">Rajgarh</option>
+                            <option value="Indore" data-en="Indore" data-hi="इंदौर">Indore</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="modal-form-footer">
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label class="label-large" data-en="Education" data-hi="शिक्षा">Education</label>
+                        <input type="text" class="input-large" id="register-education" placeholder="E.g. Graduate"
+                            data-placeholder-en="E.g. Graduate" data-placeholder-hi="उदा. स्नातक">
+                    </div>
+                    <div class="form-group">
+                        <label class="label-large" data-en="Profession" data-hi="व्यवसाय">Profession</label>
+                        <input type="text" class="input-large" id="register-profession" placeholder="E.g. Business"
+                            data-placeholder-en="E.g. Business" data-placeholder-hi="उदा. व्यापार">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label class="label-large" data-en="Mobile Number" data-hi="मोबाइल नंबर">Mobile Number</label>
+                        <input type="tel" class="input-large" id="register-phone" placeholder="Enter 10 digit number"
+                            data-placeholder-en="Enter 10 digit number" data-placeholder-hi="10 अंकों का नंबर दर्ज करें">
+                    </div>
+                    <div class="form-group">
+                        <label class="label-large" data-en="Set Password" data-hi="पासवर्ड बनाएं">Set Password</label>
+                        <input type="password" class="input-large" id="register-password" placeholder="Min 6 characters"
+                            data-placeholder-en="Min 6 characters" data-placeholder-hi="कम से कम ६ अंक">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="label-large" data-en="Profile Photo" data-hi="प्रोफ़ाइल फोटो">Profile Photo</label>
+                    <div class="photo-upload-zone" id="register-photo-zone" style="border: 2px dashed var(--color-gold); border-radius: var(--border-radius-md); padding: 16px; text-align: center; cursor: pointer; transition: var(--transition-smooth); display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 72px;">
+                        <input type="file" id="register-photo" accept="image/*" style="display: none;" onchange="handleRegisterPhotoSelect(event)">
+                        <div class="upload-zone-content" onclick="document.getElementById('register-photo').click()" style="display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="camera" style="width: 22px; height: 22px; color: var(--color-gold);"></i>
+                            <span style="font-size: 14px; font-weight: 600; color: var(--color-text-muted);" data-en="Choose or Drag Photo" data-hi="फ़ोटो चुनें या यहाँ खींचें">Choose or Drag Photo</span>
+                        </div>
+                        <img id="register-photo-preview" style="display: none; width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--color-gold); margin-left: auto;">
+                    </div>
+                </div>
+
+                <div class="modal-form-footer" style="margin-top: 10px;">
                     <button class="btn-large btn-primary" onclick="submitMockRegister()" style="width: 100%;">
                         <i data-lucide="user-plus"></i>
                         <span data-en="Register Matrimonial Profile" data-hi="वैवाहिक प्रोफ़ाइल पंजीकृत करें">Register

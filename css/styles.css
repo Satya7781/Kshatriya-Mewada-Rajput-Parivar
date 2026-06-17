@@ -2038,6 +2038,8 @@ footer.custom-footer {
     padding: 32px;
     max-width: 500px;
     width: calc(100% - 32px);
+    max-height: 92vh;
+    overflow-y: auto;
     box-shadow: var(--box-shadow-lg);
     transform: scale(0.9);
     transition: transform 0.3s ease;
@@ -2672,3 +2674,153 @@ footer.custom-footer {
         font-size: 22px;
     }
 }
+
+/* ==========================================================================
+   ADDITIONAL ENHANCED STYLES: UPLOADER & INTERESTS LIST
+   ========================================================================== */
+.photo-upload-zone:hover {
+    border-color: var(--color-saffron) !important;
+    background: var(--color-maroon-light) !important;
+}
+
+.photo-upload-zone.dragover {
+    border-color: var(--color-saffron) !important;
+    background: var(--color-gold-light) !important;
+    transform: scale(1.02);
+}
+
+.interest-item-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    background: var(--color-white);
+    border-radius: var(--border-radius-md);
+    border: 1.5px solid var(--color-gold-light);
+    box-shadow: var(--box-shadow-sm);
+    transition: var(--transition-smooth);
+    gap: 16px;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+}
+
+.interest-item-card:hover {
+    border-color: var(--color-gold);
+    box-shadow: var(--box-shadow-md);
+    transform: translateY(-2px);
+}
+
+.interest-item-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background-color: var(--color-saffron);
+}
+
+.interest-user-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.interest-username {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--color-maroon);
+    margin-bottom: 2px;
+}
+
+.interest-details {
+    font-size: 13.5px;
+    color: var(--color-text-muted);
+    font-weight: 500;
+}
+
+.interest-details span {
+    color: var(--color-gold-hover);
+    font-weight: 700;
+    margin-left: 6px;
+}
+
+.interest-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.interest-actions .btn-interest {
+    min-height: 38px;
+    min-width: 96px;
+    padding: 6px 14px;
+    font-size: 13.5px;
+    border-radius: var(--border-radius-round);
+    cursor: pointer;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: var(--transition-smooth);
+}
+
+.btn-interest-accept {
+    background: linear-gradient(135deg, var(--color-saffron), var(--color-saffron-hover));
+    color: var(--color-white);
+    border: none;
+    box-shadow: 0 2px 6px rgba(255, 111, 0, 0.2);
+}
+
+.btn-interest-accept:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(255, 111, 0, 0.35);
+}
+
+.btn-interest-decline {
+    background: transparent;
+    color: var(--color-text-muted);
+    border: 1.5px solid var(--color-text-muted);
+}
+
+.btn-interest-decline:hover {
+    background: var(--color-text-muted);
+    color: var(--color-white);
+    transform: translateY(-1px);
+}
+
+.btn-interest-connected {
+    background: var(--color-gold-light);
+    color: var(--color-gold-hover) !important;
+    border: 1px solid var(--color-gold) !important;
+    cursor: default !important;
+    pointer-events: none;
+}
+
+/* Partner Preference Styling */
+.pref-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+@media (max-width: 480px) {
+    .interest-item-card {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 16px;
+    }
+    .interest-actions {
+        width: 100%;
+        margin-top: 8px;
+    }
+    .interest-actions .btn-interest {
+        flex: 1;
+    }
+    .pref-grid {
+        grid-template-columns: 1fr;
+    }
+}
+

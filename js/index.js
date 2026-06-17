@@ -99,6 +99,23 @@ function applySessionStateUI() {
         if (mobileGuest) mobileGuest.style.display = "none";
         if (mobileUser) mobileUser.style.display = "block";
         if (mobileNavDashboard) mobileNavDashboard.style.display = "block";
+
+        // Update header names & avatars dynamically
+        const currentUserStr = sessionStorage.getItem('currentUser');
+        if (currentUserStr) {
+            const currentUser = JSON.parse(currentUserStr);
+            const dispName = currentUser.name[currentLang] || currentUser.name['en'] || "Kunwar Arjun Mewada";
+            const dispImage = currentUser.image || "https://picsum.photos/seed/arjun-singh/100/100.jpg";
+            
+            document.querySelectorAll(".user-chip-avatar").forEach(img => {
+                img.src = dispImage;
+            });
+            document.querySelectorAll(".user-chip-name").forEach(span => {
+                span.innerText = dispName;
+                span.setAttribute('data-en', currentUser.name['en']);
+                span.setAttribute('data-hi', currentUser.name['hi'] || currentUser.name['en']);
+            });
+        }
     } else {
         if (guestActions) guestActions.style.display = "flex";
         if (userActions) userActions.style.display = "none";
@@ -259,8 +276,27 @@ function toggleModalTab(tab) {
 }
 
 // Submit mock auth handlers
+let registerPhotoData = "";
+
+function handleRegisterPhotoSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        registerPhotoData = e.target.result;
+        const preview = document.getElementById("register-photo-preview");
+        if (preview) {
+            preview.src = registerPhotoData;
+            preview.style.display = "block";
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
 function submitMockLogin() {
-    const number = document.getElementById("login-phone").value;
+    const number = document.getElementById("login-phone").value.trim();
+    const pass = document.getElementById("login-password").value.trim();
+    
     if (!number) {
         showToast(currentLang === 'hi' ? 'कृपया मोबाइल नंबर दर्ज करें।' : 'Please enter your mobile number.', 'error');
         return;
@@ -269,18 +305,121 @@ function submitMockLogin() {
     showToast(currentLang === 'hi' ? 'क्रेडेंशियल सत्यापित हो रहे हैं...' : 'Verifying family credentials...', 'info');
 
     setTimeout(() => {
-        sessionStorage.setItem('isLoggedIn', 'true');
-        closeAuthModal();
-        applySessionStateUI();
-        showToast(currentLang === 'hi' ? 'सत्यापन सफल! प्रवेश किया जा रहा है...' : 'Verification successful! Redirecting...', 'success');
-        setTimeout(() => {
-            window.location.href = "dashboard.html";
-        }, 800);
+        const storedUserStr = sessionStorage.getItem('registeredUser');
+        let isValid = false;
+        let loggedUserObj = null;
+
+        if (storedUserStr) {
+            const storedUser = JSON.parse(storedUserStr);
+            if (storedUser.phone === number && storedUser.password === pass) {
+                isValid = true;
+                loggedUserObj = storedUser;
+            }
+        }
+
+        // Check default login
+        if (number === "9876543210" && (pass === "••••••••" || pass === "123456" || pass === "")) {
+            isValid = true;
+            loggedUserObj = {
+                name: { en: "Kunwar Arjun Mewada", hi: "कुंवर अर्जुन मेवाड़ा" },
+                shortName: { en: "Arjun M.", hi: "अर्जुन एम." },
+                phone: "9876543210",
+                gotraSelf: { en: "Mewada", hi: "मेवाड़ा" },
+                gotraMother: { en: "Rathore", hi: "राठौड़" },
+                gender: "Groom",
+                dob: { en: "1999-04-12", hi: "12 अप्रैल 1999" },
+                district: { en: "Bhopal", hi: "भोपाल" },
+                education: { en: "B.Tech Computer Science", hi: "बी.टेक कंप्यूटर साइंस" },
+                profession: { en: "Software Engineer", hi: "सॉफ्टवेयर इंजीनियर" },
+                image: "https://picsum.photos/seed/arjun-singh/100/100.jpg",
+                verified: true,
+                community: "Mewada",
+                fatherName: { en: "Mohan Singh", hi: "मोहन सिंह" },
+                motherName: { en: "Pushpa Bai", hi: "पुष्पा बाई" },
+                address: { en: "Phanda, Bhopal", hi: "फंदा, भोपाल" },
+                brothers: 2,
+                sisters: 1,
+                familyType: { en: "Joint Family", hi: "संयुक्त परिवार" },
+                parentsOccupation: { en: "Farmer", hi: "किसान" }
+            };
+        }
+
+        if (isValid) {
+            sessionStorage.setItem('isLoggedIn', 'true');
+            sessionStorage.setItem('currentUser', JSON.stringify(loggedUserObj));
+            closeAuthModal();
+            applySessionStateUI();
+            
+            showToast(currentLang === 'hi' ? 'सत्यापन सफल! प्रवेश किया जा रहा है...' : 'Verification successful! Redirecting...', 'success');
+            
+            setTimeout(() => {
+                window.location.href = "dashboard.html";
+            }, 800);
+        } else {
+            showToast(currentLang === 'hi' ? 'गलत मोबाइल नंबर या पासवर्ड।' : 'Invalid mobile number or password.', 'error');
+        }
     }, 1000);
 }
 
 function submitMockRegister() {
+    const name = document.getElementById("register-name").value.trim();
+    const phone = document.getElementById("register-phone").value.trim();
+    const password = document.getElementById("register-password").value.trim();
+    const gotraSelf = document.getElementById("register-gotra-self").value.trim();
+    const gotraMother = document.getElementById("register-gotra-mother").value.trim();
+    const gender = document.getElementById("register-gender").value;
+    const dob = document.getElementById("register-dob").value;
+    const district = document.getElementById("register-district").value;
+    const education = document.getElementById("register-education").value.trim();
+    const profession = document.getElementById("register-profession").value.trim();
+
+    if (!name || !phone || !password || !gotraSelf) {
+        showToast(currentLang === 'hi' ? 'कृपया सभी आवश्यक फ़ील्ड (नाम, फोन, पासवर्ड, स्वयं गोत्र) भरें।' : 'Please fill all required fields (Name, Phone, Password, Self Gotra).', 'error');
+        return;
+    }
+    if (phone.length < 10) {
+        showToast(currentLang === 'hi' ? 'कृपया एक वैध १०-अंकीय मोबाइल नंबर दर्ज करें।' : 'Please enter a valid 10-digit mobile number.', 'error');
+        return;
+    }
+    if (password.length < 6) {
+        showToast(currentLang === 'hi' ? 'पासवर्ड कम से कम ६ अंकों का होना चाहिए।' : 'Password must be at least 6 characters.', 'error');
+        return;
+    }
+
+    const registeredUser = {
+        name: { en: name, hi: name },
+        shortName: { en: name.split(" ")[0], hi: name.split(" ")[0] },
+        phone: phone,
+        password: password,
+        gotraSelf: { en: gotraSelf, hi: gotraSelf },
+        gotraMother: { en: gotraMother || "-", hi: gotraMother || "-" },
+        gender: gender,
+        dob: { en: dob || "-", hi: dob || "-" },
+        district: { en: district, hi: district },
+        education: { en: education || "-", hi: education || "-" },
+        profession: { en: profession || "-", hi: profession || "-" },
+        image: registerPhotoData || (gender === "Bride" ? "https://picsum.photos/seed/bride-avatar/200/200.jpg" : "https://picsum.photos/seed/arjun-singh/200/200.jpg"),
+        verified: true,
+        community: "Mewada",
+        fatherName: { en: "Kunwar B. S. Mewada", hi: "कुंवर बी. एस. मेवाड़ा" },
+        motherName: { en: "Antar Bai", hi: "अंतर बाई" },
+        address: { en: "Phanda, Bhopal", hi: "फंदा, भोपाल" },
+        brothers: 1,
+        sisters: 1,
+        familyType: { en: "Joint Family", hi: "संयुक्त परिवार" },
+        parentsOccupation: { en: "Farmer", hi: "किसान" }
+    };
+
+    sessionStorage.setItem('registeredUser', JSON.stringify(registeredUser));
+    
     showToast(currentLang === 'hi' ? 'सफलतापूर्वक पंजीकृत! अपने क्रेडेंशियल के साथ लॉगिन करें।' : 'Registered successfully! Please login with your credentials.', 'success');
+    
+    // Autofill login phone
+    const loginPhoneInput = document.getElementById("login-phone");
+    if (loginPhoneInput) {
+        loginPhoneInput.value = phone;
+    }
+    
     setTimeout(() => {
         toggleModalTab('login');
     }, 1000);

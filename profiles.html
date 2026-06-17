@@ -65,10 +65,10 @@
                 <div id="user-actions" style="display: none; align-items: center; gap: 16px;">
                     <div class="user-profile-summary"
                         style="display: flex; align-items: center; gap: 10px; border-left: 1px solid var(--color-gold); padding-left: 16px;">
-                        <img src="https://picsum.photos/seed/arjun-singh/100/100.jpg" alt="User Avatar"
+                        <img src="https://picsum.photos/seed/arjun-singh/100/100.jpg" alt="User Avatar" class="user-chip-avatar"
                             style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--color-gold); object-fit: cover;">
                         <div style="display: flex; flex-direction: column; text-align: left;">
-                            <span style="font-size: 14px; font-weight: 700; color: var(--color-maroon);"
+                            <span class="user-chip-name" style="font-size: 14px; font-weight: 700; color: var(--color-maroon);"
                                 data-en="Kunwar Arjun Mewada" data-hi="कुंवर अर्जुन मेवाड़ा">Kunwar Arjun Mewada</span>
                             <span
                                 style="font-size: 11px; font-weight: 600; color: var(--color-saffron); text-transform: uppercase;"
@@ -147,16 +147,32 @@
                     <div style="display: flex; gap: 8px;">
                         <select class="input-large" id="search-age-min" style="flex: 1;">
                             <option value="18" selected>18</option>
+                            <option value="19">19</option>
+                            <option value="20">20</option>
                             <option value="21">21</option>
+                            <option value="22">22</option>
                             <option value="23">23</option>
+                            <option value="24">24</option>
+                            <option value="25">25</option>
                             <option value="26">26</option>
+                            <option value="27">27</option>
+                            <option value="28">28</option>
+                            <option value="30">30</option>
+                            <option value="32">32</option>
+                            <option value="35">35</option>
                         </select>
                         <span style="align-self: center; font-weight: 700; color: var(--color-gold);">-</span>
                         <select class="input-large" id="search-age-max" style="flex: 1;">
+                            <option value="22">22</option>
+                            <option value="24">24</option>
                             <option value="25">25</option>
+                            <option value="27">27</option>
                             <option value="30" selected>30</option>
+                            <option value="33">33</option>
                             <option value="35">35</option>
+                            <option value="38">38</option>
                             <option value="40">40</option>
+                            <option value="45">45</option>
                         </select>
                     </div>
                 </div>
@@ -199,16 +215,56 @@
 
                 <!-- Height Filter -->
                 <div>
-                    <label class="label-large" data-en="Min Height" data-hi="न्यूनतम ऊंचाई">Min Height</label>
-                    <select class="input-large" id="search-height-min">
-                        <option value="all" data-en="Any Height" data-hi="कोई भी ऊंचाई">Any Height</option>
-                        <option value="60">5'0" (152 cm)</option>
-                        <option value="63">5'3" (160 cm)</option>
-                        <option value="65">5'5" (165 cm)</option>
-                        <option value="68">5'8" (173 cm)</option>
-                        <option value="70">5'10" (178 cm)</option>
-                        <option value="72">6'0" (183 cm)</option>
-                    </select>
+                    <label class="label-large" data-en="Height Range" data-hi="ऊंचाई सीमा">Height Range</label>
+                    <div style="display: flex; gap: 8px;">
+                        <select class="input-large" id="search-height-min" style="flex: 1;">
+                            <option value="all" data-en="Min" data-hi="न्यूनतम">Min</option>
+                            <option value="57">4'9" (145 cm)</option>
+                            <option value="58">4'10" (147 cm)</option>
+                            <option value="59">4'11" (150 cm)</option>
+                            <option value="60">5'0" (152 cm)</option>
+                            <option value="61">5'1" (155 cm)</option>
+                            <option value="62">5'2" (157 cm)</option>
+                            <option value="63">5'3" (160 cm)</option>
+                            <option value="64">5'4" (163 cm)</option>
+                            <option value="65">5'5" (165 cm)</option>
+                            <option value="66">5'6" (168 cm)</option>
+                            <option value="67">5'7" (170 cm)</option>
+                            <option value="68">5'8" (173 cm)</option>
+                            <option value="69">5'9" (175 cm)</option>
+                            <option value="70">5'10" (178 cm)</option>
+                            <option value="71">5'11" (180 cm)</option>
+                            <option value="72">6'0" (183 cm)</option>
+                            <option value="73">6'1" (185 cm)</option>
+                            <option value="74">6'2" (188 cm)</option>
+                            <option value="75">6'3" (191 cm)</option>
+                            <option value="76">6'4" (193 cm)</option>
+                        </select>
+                        <span style="align-self: center; font-weight: 700; color: var(--color-gold);">-</span>
+                        <select class="input-large" id="search-height-max" style="flex: 1;">
+                            <option value="all" data-en="Max" data-hi="अधिकतम">Max</option>
+                            <option value="60">5'0" (152 cm)</option>
+                            <option value="61">5'1" (155 cm)</option>
+                            <option value="62">5'2" (157 cm)</option>
+                            <option value="63">5'3" (160 cm)</option>
+                            <option value="64">5'4" (163 cm)</option>
+                            <option value="65">5'5" (165 cm)</option>
+                            <option value="66">5'6" (168 cm)</option>
+                            <option value="67">5'7" (170 cm)</option>
+                            <option value="68">5'8" (173 cm)</option>
+                            <option value="69">5'9" (175 cm)</option>
+                            <option value="70">5'10" (178 cm)</option>
+                            <option value="71">5'11" (180 cm)</option>
+                            <option value="72">6'0" (183 cm)</option>
+                            <option value="73">6'1" (185 cm)</option>
+                            <option value="74">6'2" (188 cm)</option>
+                            <option value="75">6'3" (191 cm)</option>
+                            <option value="76">6'4" (193 cm)</option>
+                            <option value="78">6'6" (198 cm)</option>
+                            <option value="80">6'8" (203 cm)</option>
+                            <option value="84" selected>7'0" (213 cm)</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- Keyword Search -->
@@ -411,25 +467,127 @@
             </div>
 
             <!-- Register Form Content -->
-            <div class="modal-form-content" id="form-register-content" style="display: none;">
-                <div class="form-group">
-                    <label class="label-large" data-en="Applicant's Full Name" data-hi="आवेदक का पूरा नाम">Applicant's
-                        Full Name</label>
-                    <input type="text" class="input-large" placeholder="E.g. Kunwar Pratap Chouhan"
-                        data-placeholder-en="E.g. Kunwar Pratap Chouhan" data-placeholder-hi="उदा. कुंवर प्रताप चौहान">
+            <div class="modal-form-content" id="form-register-content" style="display: none; gap: 12px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label class="label-large" data-en="Full Name" data-hi="पूरा नाम">Full Name</label>
+                        <input type="text" class="input-large" id="register-name" placeholder="E.g. Kunwar Pratap"
+                            data-placeholder-en="E.g. Kunwar Pratap" data-placeholder-hi="उदा. कुंवर प्रताप">
+                    </div>
+                    <div class="form-group">
+                        <label class="label-large" data-en="Gender" data-hi="लिंग">Gender</label>
+                        <select class="input-large" id="register-gender">
+                            <option value="Groom" data-en="Groom (Male)" data-hi="वर (पुरुष)">Groom (Male)</option>
+                            <option value="Bride" data-en="Bride (Female)" data-hi="वधू (स्त्री)">Bride (Female)</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="label-large" data-en="Gotra (Ancestry / Clan)" data-hi="गोत्र (वंश / कुल)">Gotra
-                        (Ancestry / Clan)</label>
-                    <input type="text" class="input-large" placeholder="E.g. Rathore" data-placeholder-en="E.g. Rathore"
-                        data-placeholder-hi="उदा. राठौड़">
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label class="label-large" data-en="Gotra (Self)" data-hi="गोत्र (स्वयं)">Gotra (Self)</label>
+                        <input type="text" class="input-large" id="register-gotra-self" placeholder="E.g. Rathore"
+                            data-placeholder-en="E.g. Rathore" data-placeholder-hi="उदा. राठौड़">
+                    </div>
+                    <div class="form-group">
+                        <label class="label-large" data-en="Gotra (Mother)" data-hi="गोत्र (माता)">Gotra (Mother)</label>
+                        <input type="text" class="input-large" id="register-gotra-mother" placeholder="E.g. Chouhan"
+                            data-placeholder-en="E.g. Chouhan" data-placeholder-hi="उदा. चौहान">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="label-large" data-en="Mobile Number" data-hi="मोबाइल नंबर">Mobile Number</label>
-                    <input type="tel" class="input-large" placeholder="Enter 10 digit number"
-                        data-placeholder-en="Enter 10 digit number" data-placeholder-hi="10 अंकों का नंबर दर्ज करें">
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label class="label-large" data-en="Date of Birth" data-hi="जन्म तिथि">Date of Birth</label>
+                        <input type="date" class="input-large" id="register-dob">
+                    </div>
+                    <div class="form-group">
+                        <label class="label-large" data-en="District" data-hi="जिला">District</label>
+                        <select class="input-large" id="register-district">
+                            <option value="Bhopal" data-en="Bhopal" data-hi="भोपाल">Bhopal</option>
+                            <option value="Sehore" data-en="Sehore" data-hi="सीहोर">Sehore</option>
+                            <option value="Rajgarh" data-en="Rajgarh" data-hi="राजगढ़">Rajgarh</option>
+                            <option value="Indore" data-en="Indore" data-hi="इंदौर">Indore</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="modal-form-footer">
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label class="label-large" data-en="Height" data-hi="ऊंचाई">Height</label>
+                        <select class="input-large" id="register-height">
+                            <option value="">-- Select Height --</option>
+                            <option value="4'9&quot;">4'9" (145 cm)</option>
+                            <option value="4'10&quot;">4'10" (147 cm)</option>
+                            <option value="4'11&quot;">4'11" (150 cm)</option>
+                            <option value="5'0&quot;">5'0" (152 cm)</option>
+                            <option value="5'1&quot;">5'1" (155 cm)</option>
+                            <option value="5'2&quot;">5'2" (157 cm)</option>
+                            <option value="5'3&quot;">5'3" (160 cm)</option>
+                            <option value="5'4&quot;">5'4" (163 cm)</option>
+                            <option value="5'5&quot;">5'5" (165 cm)</option>
+                            <option value="5'6&quot;">5'6" (168 cm)</option>
+                            <option value="5'7&quot;">5'7" (170 cm)</option>
+                            <option value="5'8&quot;">5'8" (173 cm)</option>
+                            <option value="5'9&quot;">5'9" (175 cm)</option>
+                            <option value="5'10&quot;">5'10" (178 cm)</option>
+                            <option value="5'11&quot;">5'11" (180 cm)</option>
+                            <option value="6'0&quot;">6'0" (183 cm)</option>
+                            <option value="6'1&quot;">6'1" (185 cm)</option>
+                            <option value="6'2&quot;">6'2" (188 cm)</option>
+                            <option value="6'3&quot;">6'3" (191 cm)</option>
+                            <option value="6'4&quot;">6'4" (193 cm)</option>
+                            <option value="6'5&quot;">6'5" (196 cm)</option>
+                            <option value="6'6&quot;">6'6" (198 cm)</option>
+                            <option value="6'7&quot;">6'7" (201 cm)</option>
+                            <option value="6'8&quot;">6'8" (203 cm)</option>
+                            <option value="7'0&quot;">7'0" (213 cm)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="label-large" data-en="Education" data-hi="शिक्षा">Education</label>
+                        <input type="text" class="input-large" id="register-education" placeholder="E.g. Graduate"
+                            data-placeholder-en="E.g. Graduate" data-placeholder-hi="उदा. स्नातक">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label class="label-large" data-en="Profession" data-hi="व्यवसाय">Profession</label>
+                        <input type="text" class="input-large" id="register-profession" placeholder="E.g. Business"
+                            data-placeholder-en="E.g. Business" data-placeholder-hi="उदा. व्यापार">
+                    </div>
+                    <div class="form-group" style="display: flex; flex-direction: column; justify-content: flex-end;">
+                        <!-- placeholder for alignment -->
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label class="label-large" data-en="Mobile Number" data-hi="मोबाइल नंबर">Mobile Number</label>
+                        <input type="tel" class="input-large" id="register-phone" placeholder="Enter 10 digit number"
+                            data-placeholder-en="Enter 10 digit number" data-placeholder-hi="10 अंकों का नंबर दर्ज करें">
+                    </div>
+                    <div class="form-group">
+                        <label class="label-large" data-en="Set Password" data-hi="पासवर्ड बनाएं">Set Password</label>
+                        <input type="password" class="input-large" id="register-password" placeholder="Min 6 characters"
+                            data-placeholder-en="Min 6 characters" data-placeholder-hi="कम से कम ६ अंक">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="label-large" data-en="Profile Photo" data-hi="प्रोफ़ाइल फोटो">Profile Photo</label>
+                    <div class="photo-upload-zone" id="register-photo-zone" style="border: 2px dashed var(--color-gold); border-radius: var(--border-radius-md); padding: 16px; text-align: center; cursor: pointer; transition: var(--transition-smooth); display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 72px;">
+                        <input type="file" id="register-photo" accept="image/*" style="display: none;" onchange="handleRegisterPhotoSelect(event)">
+                        <div class="upload-zone-content" onclick="document.getElementById('register-photo').click()" style="display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="camera" style="width: 22px; height: 22px; color: var(--color-gold);"></i>
+                            <span style="font-size: 14px; font-weight: 600; color: var(--color-text-muted);" data-en="Choose or Drag Photo" data-hi="फ़ोटो चुनें या यहाँ खींचें">Choose or Drag Photo</span>
+                        </div>
+                        <img id="register-photo-preview" style="display: none; width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--color-gold); margin-left: auto;">
+                    </div>
+                </div>
+
+                <div class="modal-form-footer" style="margin-top: 10px;">
                     <button class="btn-large btn-primary" onclick="submitMockRegister()" style="width: 100%;">
                         <i data-lucide="user-plus"></i>
                         <span data-en="Register Matrimonial Profile" data-hi="वैवाहिक प्रोफ़ाइल पंजीकृत करें">Register
