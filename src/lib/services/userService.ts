@@ -109,3 +109,11 @@ export async function countAdmins(): Promise<number> {
     .where(eq(users.role, "ADMIN"))
   return count
 }
+
+export async function countSuperAdmins(): Promise<number> {
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(users)
+    .where(eq(users.role, "SUPER_ADMIN"))
+  return count
+}

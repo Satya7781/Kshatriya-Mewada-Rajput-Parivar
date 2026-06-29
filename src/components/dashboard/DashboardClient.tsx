@@ -7,6 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Card } from "@/components/ui/card"
 import { BioDataEditor } from "@/components/dashboard/BioDataEditor"
 import { InterestsList } from "@/components/dashboard/InterestsList"
+import { ProfileCompleteness } from "@/components/dashboard/ProfileCompleteness"
 import { AdminPanel } from "@/components/dashboard/AdminPanel"
 import { SuperAdminPanel } from "@/components/dashboard/SuperAdminPanel"
 import { useCountUp } from "@/lib/hooks/useCountUp"
@@ -55,6 +56,7 @@ export function DashboardClient({ profile, role }: DashboardClientProps) {
           </TabsList>
 
           <TabsContent value="profile">
+            {profile.approvalStatus !== "APPROVED" && <ProfileCompleteness profile={profile} />}
             <BioDataEditor profile={profile} role={role} />
           </TabsContent>
 

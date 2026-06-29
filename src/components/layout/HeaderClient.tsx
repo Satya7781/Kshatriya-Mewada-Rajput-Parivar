@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet"
 import { AuthModal } from "@/components/auth/AuthModal"
 import { LanguageToggle } from "@/components/layout/LanguageToggle"
+import { NotificationBadge } from "@/components/layout/NotificationBadge"
 import { logoutAction } from "@/lib/actions/auth"
 import { useLang } from "@/lib/i18n/LanguageProvider"
 import type { SessionUser } from "@/types"
@@ -48,7 +49,12 @@ export function HeaderClient({ session }: HeaderClientProps) {
           <ul className="flex items-center gap-1">
             <NavLink href="/">{t("nav.home")}</NavLink>
             <NavLink href="/profiles">{t("nav.matches")}</NavLink>
-            {session && <NavLink href="/dashboard">{t("nav.dashboard")}</NavLink>}
+            {session && (
+              <span className="flex items-center gap-1.5">
+                <NavLink href="/dashboard">{t("nav.dashboard")}</NavLink>
+                <NotificationBadge />
+              </span>
+            )}
           </ul>
         </nav>
 
@@ -92,7 +98,14 @@ export function HeaderClient({ session }: HeaderClientProps) {
               <nav className="flex flex-col gap-2">
                 <MobileLink href="/">{t("nav.home")}</MobileLink>
                 <MobileLink href="/profiles">{t("nav.matches")}</MobileLink>
-                {session && <MobileLink href="/dashboard">{t("nav.dashboard")}</MobileLink>}
+                {session && (
+                  <MobileLink href="/dashboard">
+                    <span className="flex items-center gap-2">
+                      {t("nav.dashboard")}
+                      <NotificationBadge />
+                    </span>
+                  </MobileLink>
+                )}
               </nav>
               <div className="mt-auto flex flex-col gap-3 border-t border-gold-light pt-6">
                 {session ? (

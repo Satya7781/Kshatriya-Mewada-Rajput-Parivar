@@ -11,26 +11,42 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import {
   getSuperAdminStatsAction,
   listAdminsAction,
+  listAuditLogsAction,
   createAdminAction,
   demoteAdminAction,
 } from "@/lib/actions/superAdmin"
+import { useLang } from "@/lib/i18n/LanguageProvider"
 import type { SuperAdminStats, User } from "@/types"
 
+interface AuditLog {
+  id: number
+  adminId: number | null
+  adminName: string | null
+  actionType: string
+  targetUserId: number | null
+  targetName: string | null
+  timestamp: Date
+}
+
 export function SuperAdminPanel() {
+  const { t } = useLang()
   const [stats, setStats] = useState<SuperAdminStats | null>(null)
   const [admins, setAdmins] = useState<User[]>([])
-  const [logs, setLogs] = useState<Array<{ id: number; adminId: number | null; actionType: string; targetUserId: number | null; timestamp: Date }>>([])
+  const [logs, setLogs] = useState<AuditLog[]>([])
   const [form, setForm] = useState({ name: "", phone: "", password: "" })
   const [loading, setLoading] = useState(true)
 
   async function load() {
     setLoading(true)
-    const [sRes, aRes] = await Promise.all([getSuperAdminStatsAction(), listAdminsAction()])
+    const [sRes, aRes, lRes] = await Promise.all([
+      getSuperAdminStatsAction(),
+      listAdminsAction(),
+      listAuditLogsAction(),
+    ])
     setLoading(false)
-    if (sRes.success && sRes.stats) {
-      setStats(sRes.stats)
-    }
+    if (sRes.success && sRes.stats) setStats(sRes.stats)
     if (aRes.success) setAdmins(aRes.admins as User[])
+    if (lRes.success) setLogs(lRes.logs as AuditLog[])
   }
 
   useEffect(() => {
@@ -44,7 +60,7 @@ export function SuperAdminPanel() {
       toast.error(res.error)
       return
     }
-    toast.success("Admin created")
+    toast.success(t("super.created"))
     setForm({ name: "", phone: "", password: "" })
     load()
   }
@@ -56,55 +72,55 @@ export function SuperAdminPanel() {
       toast.error(res.error)
       return
     }
-    toast.success("Admin demoted")
+    toast.success(t("super.demoted"))
     load()
   }
 
-  if (loading || !stats) return <div className="text-center">Loading super admin data...</div>
+  if (loading || !stats) return <div className="text-center text-muted-foreground">{t("super.loading")}</div>
 
   return (
     <div className="space-y-8">
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard icon={Users} value={stats.totalUsers} label="Total Users" />
-        <StatCard icon={Shield} value={stats.totalAdmins} label="Total Admins" />
-        <StatCard icon={CheckCircle} value={stats.approvedUsers} label="Approved Profiles" />
+        <StatCard icon={Users} value={stats.totalUsers} label={t("super.totalUsers")} />
+        <StatCard icon={Shield} value={stats.totalAdmins} label={t("super.totalAdmins")} />
+        <StatCard icon={CheckCircle} value={stats.approvedUsers} label={t("super.approvedProfiles")} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="p-6">
           <h3 className="mb-4 flex items-center gap-2 font-heading text-xl font-bold text-maroon">
-            <UserPlus className="h-5 w-5 text-maroon" /> Create Admin Account
+            <UserPlus className="h-5 w-5 text-maroon" /> {t("super.createAdmin")}
           </h3>
           <form onSubmit={create} className="space-y-4">
             <div className="space-y-2">
-              <Label>Admin Name</Label>
+              <Label>{t("super.adminName")}</Label>
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Kunwar Vikram Singh" />
             </div>
             <div className="space-y-2">
-              <Label>Mobile Number</Label>
+              <Label>{t("super.mobile")}</Label>
               <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="Enter 10-digit number" />
             </div>
             <div className="space-y-2">
-              <Label>Set Password</Label>
+              <Label>{t("super.setPassword")}</Label>
               <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Min 6 characters" />
             </div>
-            <Button type="submit" className="w-full">Create Admin</Button>
+            <Button type="submit" className="w-full">{t("super.create")}</Button>
           </form>
         </Card>
 
         <Card className="p-6">
           <h3 className="mb-4 flex items-center gap-2 font-heading text-xl font-bold text-maroon">
-            <ShieldAlert className="h-5 w-5 text-saffron" /> Manage Admin Accounts
+            <ShieldAlert className="h-5 w-5 text-saffron" /> {t("super.manageAdmins")}
           </h3>
           {admins.length === 0 ? (
-            <p className="text-muted-foreground">No administrators registered.</p>
+            <p className="text-muted-foreground">{t("super.noAdmins")}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead className="text-right">Demote</TableHead>
+                  <TableHead>{t("admin.name")}</TableHead>
+                  <TableHead>{t("admin.phone")}</TableHead>
+                  <TableHead className="text-right">{t("super.demote")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -113,7 +129,7 @@ export function SuperAdminPanel() {
                     <TableCell className="font-semibold">{a.username}</TableCell>
                     <TableCell>{a.phone}</TableCell>
                     <TableCell className="text-right">
-                      <Button size="sm" variant="outline" onClick={() => demote(a.id)}>Demote</Button>
+                      <Button size="sm" variant="outline" onClick={() => demote(a.id)}>{t("super.demote")}</Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -125,26 +141,26 @@ export function SuperAdminPanel() {
 
       <div>
         <h3 className="mb-4 flex items-center gap-2 font-heading text-xl font-bold text-maroon">
-          <Scroll className="h-5 w-5 text-gold" /> Administrative Audit Logs
+          <Scroll className="h-5 w-5 text-gold" /> {t("super.auditLogs")}
         </h3>
         {logs.length === 0 ? (
-          <Card className="p-8 text-center text-muted-foreground">No action logs available in this view.</Card>
+          <Card className="p-8 text-center text-muted-foreground">{t("super.noLogs")}</Card>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Admin ID</TableHead>
-                <TableHead>Action</TableHead>
-                <TableHead>Target</TableHead>
-                <TableHead>Timestamp</TableHead>
+                <TableHead>{t("super.adminId")}</TableHead>
+                <TableHead>{t("super.action")}</TableHead>
+                <TableHead>{t("super.target")}</TableHead>
+                <TableHead>{t("super.timestamp")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {logs.map((l) => (
                 <TableRow key={l.id}>
-                  <TableCell>{l.adminId}</TableCell>
+                  <TableCell>{l.adminName ?? l.adminId}</TableCell>
                   <TableCell className="font-bold">{l.actionType}</TableCell>
-                  <TableCell>{l.targetUserId}</TableCell>
+                  <TableCell>{l.targetName ?? l.targetUserId ?? "—"}</TableCell>
                   <TableCell>{new Date(l.timestamp).toLocaleString()}</TableCell>
                 </TableRow>
               ))}

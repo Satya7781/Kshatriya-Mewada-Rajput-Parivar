@@ -139,6 +139,10 @@ export function ProfilesClient({ initialProfiles, user }: ProfilesClientProps) {
       toast.error(res.error)
       return
     }
+    if (res.alreadySent) {
+      toast.info(t("int.alreadySent"))
+      return
+    }
     toast.success(t("profiles.interestSent", { name: profile.username ?? "" }))
   }
 
