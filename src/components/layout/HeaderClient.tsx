@@ -6,7 +6,9 @@ import { Menu, X, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet"
 import { AuthModal } from "@/components/auth/AuthModal"
+import { LanguageToggle } from "@/components/layout/LanguageToggle"
 import { logoutAction } from "@/lib/actions/auth"
+import { useLang } from "@/lib/i18n/LanguageProvider"
 import type { SessionUser } from "@/types"
 
 interface HeaderClientProps {
@@ -14,6 +16,7 @@ interface HeaderClientProps {
 }
 
 export function HeaderClient({ session }: HeaderClientProps) {
+  const { t } = useLang()
   const [authOpen, setAuthOpen] = useState(false)
   const [authTab, setAuthTab] = useState<"login" | "register">("login")
 
@@ -36,20 +39,21 @@ export function HeaderClient({ session }: HeaderClientProps) {
             K
           </div>
           <div className="flex flex-col leading-tight">
-            <span className="text-base font-bold text-maroon">Kshatriya Mewar Rajput</span>
-            <span className="text-[10.5px] font-bold uppercase tracking-widest text-saffron">Parivar · Uniting Families</span>
+            <span className="text-base font-bold text-maroon">{t("brand.name")}</span>
+            <span className="text-[10.5px] font-bold uppercase tracking-widest text-saffron">{t("brand.tagline")}</span>
           </div>
         </Link>
 
         <nav className="hidden flex-1 justify-center md:flex">
           <ul className="flex items-center gap-1">
-            <NavLink href="/">Home</NavLink>
-            <NavLink href="/profiles">Find Matches</NavLink>
-            {session && <NavLink href="/dashboard">My Dashboard</NavLink>}
+            <NavLink href="/">{t("nav.home")}</NavLink>
+            <NavLink href="/profiles">{t("nav.matches")}</NavLink>
+            {session && <NavLink href="/dashboard">{t("nav.dashboard")}</NavLink>}
           </ul>
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
+          <LanguageToggle />
           {session ? (
             <>
               <Link href="/dashboard" className="flex items-center gap-2 rounded-full border border-gold-light bg-cream-dark pl-1 pr-3">
@@ -62,50 +66,53 @@ export function HeaderClient({ session }: HeaderClientProps) {
                 </div>
               </Link>
               <form action={logoutAction}>
-                <Button type="submit" variant="outline" size="sm">Log Out</Button>
+                <Button type="submit" variant="outline" size="sm">{t("nav.logout")}</Button>
               </form>
             </>
           ) : (
             <>
-              <Button variant="outline" size="sm" onClick={openLogin}>Login</Button>
-              <Button size="sm" onClick={openRegister}>Join Free</Button>
+              <Button variant="outline" size="sm" onClick={openLogin}>{t("nav.login")}</Button>
+              <Button size="sm" onClick={openRegister}>{t("nav.join")}</Button>
             </>
           )}
         </div>
 
-        <Sheet>
-          <SheetTrigger asChild className="md:hidden">
-            <Button variant="outline" size="icon">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent className="flex flex-col">
-            <div className="mb-6 border-b border-gold-light pb-4">
-              <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Navigation</span>
-            </div>
-            <nav className="flex flex-col gap-2">
-              <MobileLink href="/">🏠 Home</MobileLink>
-              <MobileLink href="/profiles">🔍 Find Matches</MobileLink>
-              {session && <MobileLink href="/dashboard">👤 My Dashboard</MobileLink>}
-            </nav>
-            <div className="mt-auto flex flex-col gap-3 border-t border-gold-light pt-6">
-              {session ? (
-                <form action={logoutAction}>
-                  <Button type="submit" variant="outline" className="w-full">Log Out</Button>
-                </form>
-              ) : (
-                <>
-                  <SheetClose asChild>
-                    <Button variant="outline" className="w-full" onClick={openLogin}>Login</Button>
-                  </SheetClose>
-                  <SheetClose asChild>
-                    <Button className="w-full" onClick={openRegister}>Join Parivar</Button>
-                  </SheetClose>
-                </>
-              )}
-            </div>
-          </SheetContent>
-        </Sheet>
+        <div className="flex items-center gap-2 md:hidden">
+          <LanguageToggle />
+          <Sheet>
+            <SheetTrigger asChild className="md:hidden">
+              <Button variant="outline" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="flex flex-col">
+              <div className="mb-6 border-b border-gold-light pb-4">
+                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t("nav.navigation")}</span>
+              </div>
+              <nav className="flex flex-col gap-2">
+                <MobileLink href="/">{t("nav.home")}</MobileLink>
+                <MobileLink href="/profiles">{t("nav.matches")}</MobileLink>
+                {session && <MobileLink href="/dashboard">{t("nav.dashboard")}</MobileLink>}
+              </nav>
+              <div className="mt-auto flex flex-col gap-3 border-t border-gold-light pt-6">
+                {session ? (
+                  <form action={logoutAction}>
+                    <Button type="submit" variant="outline" className="w-full">{t("nav.logout")}</Button>
+                  </form>
+                ) : (
+                  <>
+                    <SheetClose asChild>
+                      <Button variant="outline" className="w-full" onClick={openLogin}>{t("nav.login")}</Button>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Button className="w-full" onClick={openRegister}>{t("nav.joinParivar")}</Button>
+                    </SheetClose>
+                  </>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
 
       <AuthModal open={authOpen} onOpenChange={setAuthOpen} defaultTab={authTab} />

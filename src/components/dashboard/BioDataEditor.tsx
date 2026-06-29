@@ -1,14 +1,15 @@
 "use client"
 
-import { useState } from "react"
-import Image from "next/image"
+import { useState, useRef, useCallback } from "react"
 import { toast } from "sonner"
-import { Save, Printer, Camera, ShieldCheck, Clock, AlertTriangle, Edit, Info } from "lucide-react"
+import { Save, Printer, Camera, ShieldCheck, Clock, AlertTriangle, Info, UploadCloud } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
+import { SafeImage } from "@/components/ui/safe-image"
 import { updateMyProfile, requestApprovalAction } from "@/lib/actions/profile"
+import { useLang } from "@/lib/i18n/LanguageProvider"
 import type { PublicProfile, Role } from "@/types"
 
 interface BioDataEditorProps {
@@ -17,6 +18,7 @@ interface BioDataEditorProps {
 }
 
 export function BioDataEditor({ profile, role }: BioDataEditorProps) {
+  const { t } = useLang()
   const [form, setForm] = useState({
     username: profile.username || "",
     dob: profile.dob || "",
@@ -30,6 +32,8 @@ export function BioDataEditor({ profile, role }: BioDataEditorProps) {
     address: profile.address || "",
     contact: profile.contact || "",
   })
+  const [dragging, setDragging] = useState(false)
+  const fileRef = useRef<HTMLInputElement | null>(null)
 
   const isAdmin = role === "ADMIN" || role === "SUPER_ADMIN"
   const locked = (profile.approvalStatus === "APPROVED" || profile.approvalStatus === "PENDING") && !isAdmin
@@ -41,13 +45,50 @@ export function BioDataEditor({ profile, role }: BioDataEditorProps) {
     return d.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })
   }
 
+  async function uploadFile(file: File) {
+    if (!file.type.startsWith("image/")) {
+      toast.error(t("bio.uploadFailed"))
+      return
+    }
+    if (file.size > 30 * 1024 * 1024) {
+      toast.error(t("bio.uploadFailed"))
+      return
+    }
+    const data = new FormData()
+    data.append("file", file)
+    const res = await fetch("/api/profile/upload", { method: "POST", body: data })
+    const json = await res.json()
+    if (!json.success) {
+      toast.error(json.error || t("bio.uploadFailed"))
+      return
+    }
+    toast.success(t("bio.photoUploaded"))
+  }
+
+  function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) uploadFile(file)
+  }
+
+  const onDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      setDragging(false)
+      if (locked) return
+      const file = e.dataTransfer.files?.[0]
+      if (file) uploadFile(file)
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [locked]
+  )
+
   async function handleSave() {
     const res = await updateMyProfile(form)
     if (!res.success) {
       toast.error(res.error)
       return
     }
-    toast.success("Profile saved successfully!")
+    toast.success(t("bio.saved"))
   }
 
   async function handleRequestApproval() {
@@ -56,28 +97,14 @@ export function BioDataEditor({ profile, role }: BioDataEditorProps) {
       toast.error(res.error)
       return
     }
-    toast.success("Profile submitted for verification.")
-  }
-
-  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const data = new FormData()
-    data.append("file", file)
-    const res = await fetch("/api/profile/upload", { method: "POST", body: data })
-    const json = await res.json()
-    if (!json.success) {
-      toast.error(json.error || "Upload failed")
-      return
-    }
-    toast.success("Photo uploaded")
+    toast.success(t("bio.submitted"))
   }
 
   let statusConfig = {
     icon: Info,
     color: "text-gold",
     bg: "bg-white border-gold-light",
-    text: "Profile Draft (Submit for Admin Verification)",
+    text: t("bio.draft"),
     showButton: true,
   }
 
@@ -86,7 +113,7 @@ export function BioDataEditor({ profile, role }: BioDataEditorProps) {
       icon: ShieldCheck,
       color: "text-green-600",
       bg: "bg-green-50 border-green-200",
-      text: "Administrator Account (Profile Settings Active)",
+      text: t("bio.adminAccount"),
       showButton: false,
     }
   } else if (profile.approvalStatus === "APPROVED") {
@@ -94,7 +121,7 @@ export function BioDataEditor({ profile, role }: BioDataEditorProps) {
       icon: ShieldCheck,
       color: "text-green-600",
       bg: "bg-green-50 border-green-200",
-      text: "Profile Verified & Active (Details Locked)",
+      text: t("bio.verified"),
       showButton: false,
     }
   } else if (profile.approvalStatus === "PENDING") {
@@ -102,7 +129,7 @@ export function BioDataEditor({ profile, role }: BioDataEditorProps) {
       icon: Clock,
       color: "text-yellow-600",
       bg: "bg-yellow-50 border-yellow-200",
-      text: "Verification Pending (Awaiting Admin Review)",
+      text: t("bio.pending"),
       showButton: false,
     }
   } else if (profile.approvalStatus === "REJECTED") {
@@ -110,7 +137,7 @@ export function BioDataEditor({ profile, role }: BioDataEditorProps) {
       icon: AlertTriangle,
       color: "text-red-600",
       bg: "bg-red-50 border-red-200",
-      text: "Profile Rejected (Please correct details & re-submit)",
+      text: t("bio.rejected"),
       showButton: true,
     }
   }
@@ -120,7 +147,7 @@ export function BioDataEditor({ profile, role }: BioDataEditorProps) {
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <Card className="p-6">
-        <h2 className="mb-2 font-heading text-2xl font-bold text-maroon">Edit Profile Details</h2>
+        <h2 className="mb-2 font-heading text-2xl font-bold text-maroon">{t("bio.editTitle")}</h2>
 
         <div className={`mb-6 flex items-center justify-between gap-4 rounded-xl border p-4 ${statusConfig.bg}`}>
           <div className="flex items-center gap-3">
@@ -128,86 +155,99 @@ export function BioDataEditor({ profile, role }: BioDataEditorProps) {
             <span className={`font-bold ${statusConfig.color}`}>{statusConfig.text}</span>
           </div>
           {statusConfig.showButton && (
-            <Button size="sm" onClick={handleRequestApproval}>Submit for Verification</Button>
+            <Button size="sm" onClick={handleRequestApproval}>{t("bio.submit")}</Button>
           )}
         </div>
 
         <div className="mb-6">
-          <Label className="mb-2">Profile Photo</Label>
-          <label className={`flex cursor-pointer items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-gold bg-cream-dark p-4 transition ${locked ? "pointer-events-none opacity-60" : "hover:bg-cream"}`}>
-            <Camera className="h-6 w-6 text-gold" />
-            <span className="font-semibold text-muted-foreground">Change Profile Photo</span>
-            <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={locked} />
-          </label>
+          <Label className="mb-2">{t("bio.profilePhoto")}</Label>
+          <div
+            onDragOver={(e) => { e.preventDefault(); if (!locked) setDragging(true) }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={onDrop}
+            onClick={() => !locked && fileRef.current?.click()}
+            className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-6 transition ${
+              locked ? "pointer-events-none opacity-60" : ""
+            } ${dragging ? "border-saffron bg-saffron-light" : "border-gold bg-cream-dark hover:bg-cream"}`}
+          >
+            <UploadCloud className="h-8 w-8 text-gold" />
+            <span className="text-center text-sm font-semibold text-muted-foreground">{t("bio.dropHere")}</span>
+            <span className="flex items-center gap-1 text-xs text-maroon">
+              <Camera className="h-3.5 w-3.5" /> {t("bio.changePhoto")}
+            </span>
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={locked} />
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Full Name" value={form.username} onChange={(v) => setForm({ ...form, username: v })} disabled={locked} />
-          <Field label="Gender">
+          <Field label={t("bio.fullName")} value={form.username} onChange={(v) => setForm({ ...form, username: v })} disabled={locked} />
+          <Field label={t("bio.gender")}>
             <select className="input-style" value={form.type} disabled={locked} onChange={(e) => setForm({ ...form, type: e.target.value as any })} >
-              <option value="GROOM">Groom</option>
-              <option value="BRIDE">Bride</option>
+              <option value="GROOM">{t("auth.groom")}</option>
+              <option value="BRIDE">{t("auth.bride")}</option>
             </select>
           </Field>
-          <Field label="Date of Birth" value={form.dob} onChange={(v) => setForm({ ...form, dob: v })} disabled={locked} type="date" />
-          <Field label="Height" value={form.height} onChange={(v) => setForm({ ...form, height: v })} disabled={locked} />
-          <Field label="Gotra (Self)" value={form.gotraSelf} onChange={(v) => setForm({ ...form, gotraSelf: v })} disabled={locked} />
-          <Field label="Gotra (Mother)" value={form.gotraMother} onChange={(v) => setForm({ ...form, gotraMother: v })} disabled={locked} />
-          <Field label="Education" value={form.education} onChange={(v) => setForm({ ...form, education: v })} disabled={locked} />
-          <Field label="Profession" value={form.profession} onChange={(v) => setForm({ ...form, profession: v })} disabled={locked} />
-          <Field label="District" value={form.district} onChange={(v) => setForm({ ...form, district: v })} disabled={locked} />
-          <Field label="Contact" value={form.contact} onChange={(v) => setForm({ ...form, contact: v })} disabled={locked} />
+          <Field label={t("bio.dob")} value={form.dob} onChange={(v) => setForm({ ...form, dob: v })} disabled={locked} type="date" />
+          <Field label={t("bio.height")} value={form.height} onChange={(v) => setForm({ ...form, height: v })} disabled={locked} />
+          <Field label={t("bio.gotraSelf")} value={form.gotraSelf} onChange={(v) => setForm({ ...form, gotraSelf: v })} disabled={locked} />
+          <Field label={t("bio.gotraMother")} value={form.gotraMother} onChange={(v) => setForm({ ...form, gotraMother: v })} disabled={locked} />
+          <Field label={t("bio.education")} value={form.education} onChange={(v) => setForm({ ...form, education: v })} disabled={locked} />
+          <Field label={t("bio.profession")} value={form.profession} onChange={(v) => setForm({ ...form, profession: v })} disabled={locked} />
+          <Field label={t("bio.district")} value={form.district} onChange={(v) => setForm({ ...form, district: v })} disabled={locked} />
+          <Field label={t("bio.contact")} value={form.contact} onChange={(v) => setForm({ ...form, contact: v })} disabled={locked} />
           <div className="md:col-span-2">
-            <Field label="Address / Native Place" value={form.address} onChange={(v) => setForm({ ...form, address: v })} disabled={locked} />
+            <Field label={t("bio.address")} value={form.address} onChange={(v) => setForm({ ...form, address: v })} disabled={locked} />
           </div>
         </div>
 
         {!locked && (
           <Button className="mt-6 w-full" onClick={handleSave}>
-            <Save className="mr-2 h-4 w-4" /> Save Changes
+            <Save className="mr-2 h-4 w-4" /> {t("bio.save")}
           </Button>
         )}
       </Card>
 
       <Card className="p-6">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-heading text-2xl font-bold text-maroon">Bio-Data Preview</h2>
+          <h2 className="font-heading text-2xl font-bold text-maroon">{t("bio.preview")}</h2>
           <Button variant="outline" size="sm" onClick={() => window.print()}>
-            <Printer className="mr-2 h-4 w-4" /> Print
+            <Printer className="mr-2 h-4 w-4" /> {t("bio.print")}
           </Button>
         </div>
 
         <div id="biodata-card" className="rounded-2xl border-8 border-double border-maroon bg-cream p-6 md:p-8">
           <div className="text-center">
             <div className="mb-2 text-lg font-bold text-maroon">॥ श्री गणेशाय नमः ॥</div>
-            <div className="font-heading text-2xl font-bold text-maroon">Matrimonial Bio-Data</div>
-            <div className="text-gold">Kshatriya Mewada Rajput</div>
+            <div className="font-heading text-2xl font-bold text-maroon">{t("bio.biodataTitle")}</div>
+            <div className="text-gold">{t("bio.kshatriya")}</div>
           </div>
 
           <div className="mx-auto my-6 flex justify-center">
             <div className="relative h-32 w-32 overflow-hidden rounded-full border-4 border-gold">
-              <Image
-                src={profile.imageUrl || `/images/${profile.username?.split(" ")[0].toLowerCase()}.jpeg`}
-                alt={profile.username || ""}
+              <SafeImage
+                src={profile.imageUrl}
+                name={profile.username ?? undefined}
+                alt={profile.username ?? ""}
                 fill
                 className="object-cover"
+                sizes="128px"
               />
             </div>
           </div>
 
           <table className="w-full text-sm">
             <tbody className="divide-y divide-gold-light">
-              <PreviewRow label="Name" value={form.username} />
-              <PreviewRow label="Birth Date" value={formatDob(form.dob)} />
-              <PreviewRow label="Height" value={form.height} />
-              <PreviewRow label="Gender" value={form.type} />
-              <PreviewRow label="District" value={form.district} />
-              <PreviewRow label="Self Gotra" value={form.gotraSelf} />
-              <PreviewRow label="Mother Gotra" value={form.gotraMother} />
-              <PreviewRow label="Education" value={form.education} />
-              <PreviewRow label="Profession" value={form.profession} />
-              <PreviewRow label="Native Place" value={form.address} />
-              <PreviewRow label="Contact" value={form.contact} />
+              <PreviewRow label={t("bio.name")} value={form.username} />
+              <PreviewRow label={t("bio.birthDate")} value={formatDob(form.dob)} />
+              <PreviewRow label={t("bio.height")} value={form.height} />
+              <PreviewRow label={t("bio.gender")} value={form.type} />
+              <PreviewRow label={t("bio.district")} value={form.district} />
+              <PreviewRow label={t("modal.gotraSelf")} value={form.gotraSelf} />
+              <PreviewRow label={t("modal.gotraMother")} value={form.gotraMother} />
+              <PreviewRow label={t("bio.education")} value={form.education} />
+              <PreviewRow label={t("bio.profession")} value={form.profession} />
+              <PreviewRow label={t("bio.nativePlace")} value={form.address} />
+              <PreviewRow label={t("bio.contact")} value={form.contact} />
             </tbody>
           </table>
         </div>

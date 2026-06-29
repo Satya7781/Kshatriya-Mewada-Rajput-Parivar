@@ -5,7 +5,9 @@ import { toast } from "sonner"
 import { Heart, CheckCircle2, X, HeartOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { SafeImage } from "@/components/ui/safe-image"
 import { getMyInterestsAction, acceptInterestAction, declineInterestAction } from "@/lib/actions/interest"
+import { useLang } from "@/lib/i18n/LanguageProvider"
 
 interface InterestItem {
   id: number
@@ -21,6 +23,7 @@ interface InterestItem {
 }
 
 export function InterestsList() {
+  const { t } = useLang()
   const [interests, setInterests] = useState<InterestItem[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -42,7 +45,7 @@ export function InterestsList() {
       toast.error(res.error)
       return
     }
-    toast.success("Interest accepted")
+    toast.success(t("int.accepted"))
     load()
   }
 
@@ -52,17 +55,17 @@ export function InterestsList() {
       toast.error(res.error)
       return
     }
-    toast.info("Interest declined")
+    toast.info(t("int.declined"))
     load()
   }
 
-  if (loading) return <div className="text-center text-muted-foreground">Loading interests...</div>
+  if (loading) return <div className="text-center text-muted-foreground">{t("int.loading")}</div>
 
   if (interests.length === 0) {
     return (
       <Card className="p-8 text-center">
         <HeartOff className="mx-auto mb-3 h-10 w-10 text-gold" />
-        <p className="font-semibold text-muted-foreground">No pending interests received.</p>
+        <p className="font-semibold text-muted-foreground">{t("int.none")}</p>
       </Card>
     )
   }
@@ -73,16 +76,19 @@ export function InterestsList() {
         <Card key={item.id} className="flex flex-col items-center justify-between gap-4 p-4 sm:flex-row">
           <div className="flex items-center gap-4">
             <div className="h-14 w-14 overflow-hidden rounded-full border-2 border-gold">
-              {item.senderImage ? (
-                <img src={item.senderImage} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-maroon text-white">{item.senderName?.[0]}</div>
-              )}
+              <SafeImage
+                src={item.senderImage}
+                name={item.senderName ?? undefined}
+                alt={item.senderName ?? ""}
+                width={56}
+                height={56}
+                className="h-full w-full object-cover"
+              />
             </div>
             <div>
               <div className="font-heading text-lg font-bold text-maroon">{item.senderName}</div>
               <div className="text-sm text-muted-foreground">
-                {item.age} yrs · Gotra: {item.gotraSelf} (Mother: {item.gotraMother}) · Dist: {item.district}
+                {item.age} yrs · {t("modal.gotraSelf")}: {item.gotraSelf} ({t("modal.gotraMother")}: {item.gotraMother}) · {t("profiles.district")}: {item.district}
               </div>
             </div>
           </div>
@@ -90,10 +96,10 @@ export function InterestsList() {
             {item.status === "PENDING" ? (
               <>
                 <Button variant="outline" size="sm" onClick={() => decline(item.id)}>
-                  <X className="mr-1 h-4 w-4" /> Decline
+                  <X className="mr-1 h-4 w-4" /> {t("int.decline")}
                 </Button>
                 <Button size="sm" onClick={() => accept(item.id)}>
-                  <Heart className="mr-1 h-4 w-4" /> Accept
+                  <Heart className="mr-1 h-4 w-4" /> {t("int.accept")}
                 </Button>
               </>
             ) : (
