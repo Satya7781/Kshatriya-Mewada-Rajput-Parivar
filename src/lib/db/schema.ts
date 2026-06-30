@@ -21,6 +21,7 @@ export const approvalStatusEnum = pgEnum("approval_status", [
 ])
 export const actionTypeEnum = pgEnum("action_type", ["APPROVE", "REJECT", "DELETE"])
 export const interestStatusEnum = pgEnum("interest_status", ["PENDING", "ACCEPTED", "DECLINED"])
+export const contactRequestStatusEnum = pgEnum("contact_request_status", ["PENDING", "APPROVED", "REJECTED"])
 
 export const users = pgTable(
   "users",
@@ -33,6 +34,9 @@ export const users = pgTable(
     role: roleEnum("role").notNull().default("USER"),
     isApproved: boolean("is_approved").notNull().default(false),
     emailVerified: boolean("email_verified").notNull().default(true),
+    // Soft-delete: when set, the user is hidden from all queries but the row is
+    // retained for audit/recovery. Hard delete is reserved for forced cleanup.
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
@@ -123,6 +127,31 @@ export const interests = pgTable(
   })
 )
 
+export const contactRequests = pgTable(
+  "contact_requests",
+  {
+    id: serial("id").primaryKey(),
+    requesterId: integer("requester_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    ownerId: integer("owner_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: contactRequestStatusEnum("status").notNull().default("PENDING"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => ({
+    requesterIdx: index("contact_requests_requester_idx").on(table.requesterId),
+    ownerIdx: index("contact_requests_owner_idx").on(table.ownerId),
+    statusIdx: index("contact_requests_status_idx").on(table.status),
+    uniqueRequest: uniqueIndex("contact_requests_requester_owner_idx").on(table.requesterId, table.ownerId),
+  })
+)
+
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
 export type Profile = typeof profiles.$inferSelect
@@ -131,3 +160,5 @@ export type AdminActionLog = typeof adminActionLogs.$inferSelect
 export type NewAdminActionLog = typeof adminActionLogs.$inferInsert
 export type Interest = typeof interests.$inferSelect
 export type NewInterest = typeof interests.$inferInsert
+export type ContactRequest = typeof contactRequests.$inferSelect
+export type NewContactRequest = typeof contactRequests.$inferInsert

@@ -1,35 +1,26 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, useCallback } from "react"
 import { toast } from "sonner"
-import { RotateCcw, Search, SlidersHorizontal, Unlock } from "lucide-react"
+import { RotateCcw, Search, SlidersHorizontal, Unlock, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
 import { ProfileCard } from "./ProfileCard"
 import { ProfileModal } from "./ProfileModal"
-import { sendInterestAction } from "@/lib/actions/interest"
+import { requestContactAction } from "@/lib/actions/contactRequest"
+import { searchProfilesAction } from "@/lib/actions/profiles"
 import { useLang } from "@/lib/i18n/LanguageProvider"
 import type { PublicProfile, SessionUser } from "@/types"
 
 interface ProfilesClientProps {
   initialProfiles: PublicProfile[]
   user: SessionUser | null
+  initialTotal: number
 }
 
 type SortKey = "default" | "ageAsc" | "ageDesc" | "heightAsc" | "heightDesc" | "verifiedFirst"
-
-// Inches used for height comparison. Heights look like "5'10\"".
-function heightToInches(h: string | null): number {
-  if (!h) return 0
-  const m = h.match(/(\d+)['’]\s*(\d+)/)
-  if (m) return Number(m[1]) * 12 + Number(m[2])
-  const cm = h.match(/(\d+)\s*cm/i)
-  if (cm) return Math.round(Number(cm[1]) / 2.54)
-  return 0
-}
 
 const HEIGHT_FILTER_OPTIONS = [
   { value: 0, labelKey: "profiles.anyHeight" as const },
@@ -40,10 +31,10 @@ const HEIGHT_FILTER_OPTIONS = [
   { value: 72, label: "6'0\"" },
 ]
 
-export function ProfilesClient({ initialProfiles, user }: ProfilesClientProps) {
+const PAGE_SIZE = 12
+
+export function ProfilesClient({ initialProfiles, user, initialTotal }: ProfilesClientProps) {
   const { t } = useLang()
-  const router = useRouter()
-  const [profiles] = useState(initialProfiles)
   const [selected, setSelected] = useState<PublicProfile | null>(null)
 
   const [gender, setGender] = useState("all")
@@ -58,62 +49,64 @@ export function ProfilesClient({ initialProfiles, user }: ProfilesClientProps) {
   const [heightMin, setHeightMin] = useState(0)
   const [sort, setSort] = useState<SortKey>("default")
 
-  const filtered = useMemo(() => {
-    const result = profiles.filter((p) => {
-      if (gender !== "all" && p.type.toLowerCase() !== gender.toLowerCase()) return false
-      if (p.age && (p.age < ageMin || p.age > ageMax)) return false
-      if (community !== "all" && p.community !== community) return false
-      if (district !== "all" && p.district !== district) return false
-      if (verifiedOnly && p.approvalStatus !== "APPROVED") return false
-      if (heightMin > 0 && heightToInches(p.height) < heightMin) return false
+  const [page, setPage] = useState(1)
+  const [results, setResults] = useState<PublicProfile[]>(initialProfiles)
+  const [total, setTotal] = useState(initialTotal)
+  const [loading, setLoading] = useState(false)
+  const [applied, setApplied] = useState(false) // whether a search has been applied
 
-      const q = gotraQuery.toLowerCase()
-      if (q) {
-        const g = `${p.gotraSelf || ""} ${p.gotraMother || ""}`.toLowerCase()
-        if (!g.includes(q)) return false
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+
+  // Build the filter object from current UI state.
+  const buildFilters = useCallback(
+    (forPage: number) => ({
+      gender: gender as "groom" | "bride" | "all",
+      ageMin,
+      ageMax,
+      community,
+      district,
+      gotraQuery: gotraQuery.trim() || undefined,
+      gotraExclude: gotraExclude.trim() || undefined,
+      keyword: keyword.trim() || undefined,
+      verifiedOnly,
+      heightMinInches: heightMin || undefined,
+      sort,
+      page: forPage,
+      pageSize: PAGE_SIZE,
+    }),
+    [gender, ageMin, ageMax, community, district, gotraQuery, gotraExclude, keyword, verifiedOnly, heightMin, sort]
+  )
+
+  // Fetch a page from the server.
+  const runSearch = useCallback(
+    async (forPage: number) => {
+      setLoading(true)
+      const res = await searchProfilesAction(buildFilters(forPage))
+      setLoading(false)
+      if (!res.success) {
+        toast.error(res.error)
+        return
       }
+      setResults(res.data.profiles)
+      setTotal(res.data.total)
+    },
+    [buildFilters]
+  )
 
-      const ex = gotraExclude.toLowerCase()
-      if (ex) {
-        const g = `${p.gotraSelf || ""} ${p.gotraMother || ""}`.toLowerCase()
-        if (g.includes(ex)) return false
-      }
+  // When the user clicks "Apply", reset to page 1 and fetch.
+  function applySearch() {
+    setApplied(true)
+    setPage(1)
+    runSearch(1)
+  }
 
-      const k = keyword.toLowerCase()
-      if (k) {
-        const text = `${p.education || ""} ${p.profession || ""}`.toLowerCase()
-        if (!text.includes(k)) return false
-      }
-
-      return true
-    })
-
-    switch (sort) {
-      case "ageAsc":
-        result.sort((a, b) => (a.age ?? 999) - (b.age ?? 999))
-        break
-      case "ageDesc":
-        result.sort((a, b) => (b.age ?? 0) - (a.age ?? 0))
-        break
-      case "heightAsc":
-        result.sort((a, b) => heightToInches(a.height) - heightToInches(b.height))
-        break
-      case "heightDesc":
-        result.sort((a, b) => heightToInches(b.height) - heightToInches(a.height))
-        break
-      case "verifiedFirst":
-        result.sort((a, b) => {
-          const av = a.approvalStatus === "APPROVED" ? 0 : 1
-          const bv = b.approvalStatus === "APPROVED" ? 0 : 1
-          return av - bv
-        })
-        break
-      default:
-        break
-    }
-
-    return result
-  }, [profiles, gender, ageMin, ageMax, community, district, gotraQuery, gotraExclude, keyword, verifiedOnly, heightMin, sort])
+  // Pagination: fetch the requested page.
+  function gotoPage(p: number) {
+    const clamped = Math.min(Math.max(1, p), totalPages)
+    setPage(clamped)
+    runSearch(clamped)
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" })
+  }
 
   function resetFilters() {
     setGender("all")
@@ -127,23 +120,27 @@ export function ProfilesClient({ initialProfiles, user }: ProfilesClientProps) {
     setVerifiedOnly(false)
     setHeightMin(0)
     setSort("default")
+    setApplied(false)
+    setPage(1)
+    setResults(initialProfiles)
+    setTotal(initialTotal)
   }
 
-  async function handleInterest(profile: PublicProfile) {
+  async function handleRequestContact(profile: PublicProfile) {
     if (!user) {
       toast.info(t("profiles.loginToSend"))
       return
     }
-    const res = await sendInterestAction(profile.userId)
+    const res = await requestContactAction(profile.userId)
     if (!res.success) {
       toast.error(res.error)
       return
     }
-    if (res.alreadySent) {
-      toast.info(t("int.alreadySent"))
+    if (res.alreadyRequested) {
+      toast.info(t("profiles.contactAlreadyRequested"))
       return
     }
-    toast.success(t("profiles.interestSent", { name: profile.username ?? "" }))
+    toast.success(t("profiles.contactRequested", { name: profile.username ?? "" }))
   }
 
   return (
@@ -248,8 +245,9 @@ export function ProfilesClient({ initialProfiles, user }: ProfilesClientProps) {
               <Button variant="outline" onClick={resetFilters}>
                 <RotateCcw className="mr-2 h-4 w-4" /> {t("profiles.reset")}
               </Button>
-              <Button onClick={() => toast.success(t("profiles.foundMatches", { n: filtered.length }))}>
-                <Search className="mr-2 h-4 w-4" /> {t("profiles.apply")}
+              <Button onClick={applySearch} disabled={loading}>
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
+                {t("profiles.apply")}
               </Button>
             </div>
           </Card>
@@ -257,27 +255,47 @@ export function ProfilesClient({ initialProfiles, user }: ProfilesClientProps) {
           <div className="mb-4 flex items-center justify-between border-b-2 border-gold-light pb-3">
             <h3 className="font-heading text-2xl font-bold text-maroon">{t("profiles.results")}</h3>
             <span className="text-sm font-semibold text-muted-foreground">
-              {filtered.length} {t("profiles.matchesFound")}
+              {applied ? `${total} ${t("profiles.matchesFound")}` : `${initialTotal} ${t("profiles.matchesFound")}`}
             </span>
           </div>
 
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className="flex justify-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-maroon" />
+            </div>
+          ) : results.length === 0 ? (
             <div className="rounded-2xl border-2 border-dashed border-gold bg-white p-12 text-center">
               <h4 className="font-heading text-xl font-bold text-maroon">{t("profiles.noMatches")}</h4>
               <p className="mt-2 text-muted-foreground">{t("profiles.noMatchesDesc")}</p>
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((profile) => (
-                <ProfileCard
-                  key={profile.userId}
-                  profile={profile}
-                  isLoggedIn={!!user}
-                  onView={() => setSelected(profile)}
-                  onInterest={() => handleInterest(profile)}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {results.map((profile) => (
+                  <ProfileCard
+                    key={profile.userId}
+                    profile={profile}
+                    isLoggedIn={!!user}
+                    onView={() => setSelected(profile)}
+                    onRequestContact={() => handleRequestContact(profile)}
+                  />
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <div className="mt-10 flex items-center justify-center gap-4">
+                  <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => gotoPage(page - 1)}>
+                    <ChevronLeft className="mr-1 h-4 w-4" /> {t("profiles.prev")}
+                  </Button>
+                  <span className="font-heading font-bold text-maroon">
+                    {page} / {totalPages}
+                  </span>
+                  <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => gotoPage(page + 1)}>
+                    {t("profiles.next")} <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>
@@ -287,7 +305,6 @@ export function ProfilesClient({ initialProfiles, user }: ProfilesClientProps) {
         open={!!selected}
         onOpenChange={(open) => !open && setSelected(null)}
         isLoggedIn={!!user}
-        onSendInterest={() => selected && handleInterest(selected)}
       />
     </>
   )

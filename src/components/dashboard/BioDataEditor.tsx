@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from "react"
 import { toast } from "sonner"
-import { Save, Printer, Camera, ShieldCheck, Clock, AlertTriangle, Info, UploadCloud } from "lucide-react"
+import { Save, Printer, Camera, ShieldCheck, Clock, AlertTriangle, Info, UploadCloud, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -31,12 +31,14 @@ export function BioDataEditor({ profile, role }: BioDataEditorProps) {
     profession: profile.profession || "",
     address: profile.address || "",
     contact: profile.contact || "",
+    visible: profile.visible,
   })
   const [dragging, setDragging] = useState(false)
   const fileRef = useRef<HTMLInputElement | null>(null)
 
   const isAdmin = role === "ADMIN" || role === "SUPER_ADMIN"
-  const locked = (profile.approvalStatus === "APPROVED" || profile.approvalStatus === "PENDING") && !isAdmin
+  // Normal users can now customize their own profile anytime.
+  const locked = false
 
   function formatDob(dob: string) {
     if (!dob || dob === "-") return "-"
@@ -89,6 +91,16 @@ export function BioDataEditor({ profile, role }: BioDataEditorProps) {
       return
     }
     toast.success(t("bio.saved"))
+  }
+
+  async function handleToggleVisibility() {
+    const res = await updateMyProfile({ visible: !form.visible })
+    if (!res.success) {
+      toast.error(res.error)
+      return
+    }
+    setForm((prev) => ({ ...prev, visible: !prev.visible }))
+    toast.success(form.visible ? t("bio.hidden") : t("bio.shown"))
   }
 
   async function handleRequestApproval() {
@@ -157,6 +169,28 @@ export function BioDataEditor({ profile, role }: BioDataEditorProps) {
           {statusConfig.showButton && (
             <Button size="sm" onClick={handleRequestApproval}>{t("bio.submit")}</Button>
           )}
+        </div>
+
+        <div className="mb-6 flex items-center justify-between rounded-xl border border-gold-light bg-cream-dark p-4">
+          <div className="flex items-center gap-3">
+            {form.visible ? <Eye className="h-5 w-5 text-green-600" /> : <EyeOff className="h-5 w-5 text-saffron" />}
+            <div>
+              <div className="font-bold text-maroon">{form.visible ? t("bio.profileVisible") : t("bio.profileHidden")}</div>
+              <div className="text-xs text-muted-foreground">{form.visible ? t("bio.profileVisibleDesc") : t("bio.profileHiddenDesc")}</div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleToggleVisibility}
+            className={`relative h-6 w-11 rounded-full transition ${form.visible ? "bg-green-600" : "bg-saffron"}`}
+            aria-label={form.visible ? t("bio.hideProfile") : t("bio.showProfile")}
+          >
+            <span
+              className={`absolute top-1 h-4 w-4 rounded-full bg-white transition ${
+                form.visible ? "left-6" : "left-1"
+              }`}
+            />
+          </button>
         </div>
 
         <div className="mb-6">

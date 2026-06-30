@@ -32,7 +32,18 @@ export async function getSession(): Promise<SessionUser | null> {
 
   try {
     const { payload } = await jwtVerify(token, secret, { algorithms: ["HS256"] })
-    return payload as unknown as SessionUser
+    // Tokens encode the user id as `userId`; normalize to the SessionUser shape.
+    const raw = payload as Record<string, unknown>
+    const userId = typeof raw.id === "number" ? raw.id : typeof raw.userId === "number" ? raw.userId : null
+    if (userId === null) return null
+
+    return {
+      id: userId,
+      role: raw.role as Role,
+      phone: raw.phone as string,
+      username: (raw.username as string | null | undefined) ?? null,
+      isApproved: raw.isApproved as boolean,
+    }
   } catch {
     return null
   }

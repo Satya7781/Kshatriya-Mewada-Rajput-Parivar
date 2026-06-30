@@ -29,16 +29,15 @@ export async function updateMyProfile(data: {
   sisters?: string
   familyType?: string
   parentsOccupation?: string
+  visible?: boolean
 }) {
   const session = await getSession()
   if (!session) return { success: false, error: "Not authenticated" }
 
   const profile = await getProfileByUserId(session.id)
   if (!profile) return { success: false, error: "Profile not found" }
-  if (profile.approvalStatus === "APPROVED" && session.role === "USER") {
-    return { success: false, error: "Approved profiles cannot be edited." }
-  }
 
+  // Users can always update their own profile details and visibility.
   await updateProfile(session.id, {
     ...data,
   })

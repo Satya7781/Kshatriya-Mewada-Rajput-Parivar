@@ -1,11 +1,13 @@
 "use client"
 
-import { useState } from "react"
-import { Phone, Lock, ShieldCheck, ZoomIn } from "lucide-react"
+import { useEffect, useState } from "react"
+import { toast } from "sonner"
+import { Phone, Lock, ShieldCheck, ZoomIn, Clock, Send } from "lucide-react"
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { SafeImage } from "@/components/ui/safe-image"
 import { PhotoLightbox } from "@/components/ui/PhotoLightbox"
+import { getContactStatusAction, requestContactAction } from "@/lib/actions/contactRequest"
 import { useLang } from "@/lib/i18n/LanguageProvider"
 import type { PublicProfile } from "@/types"
 
@@ -14,17 +16,50 @@ interface ProfileModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   isLoggedIn: boolean
-  onSendInterest?: () => void
 }
 
-export function ProfileModal({ profile, open, onOpenChange, isLoggedIn, onSendInterest }: ProfileModalProps) {
+export function ProfileModal({ profile, open, onOpenChange, isLoggedIn }: ProfileModalProps) {
   const { t } = useLang()
   const [lightbox, setLightbox] = useState(false)
+  const [contactStatus, setContactStatus] = useState<"PENDING" | "APPROVED" | null | undefined>(undefined)
+  const [requesting, setRequesting] = useState(false)
+
+  useEffect(() => {
+    if (!open || !profile || !isLoggedIn) {
+      setContactStatus(undefined)
+      return
+    }
+
+    let cancelled = false
+    getContactStatusAction(profile.userId).then((res) => {
+      if (!cancelled && res.success) {
+        setContactStatus(res.status)
+      }
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [open, profile, isLoggedIn])
 
   if (!profile) return null
 
-  const hasContact = isLoggedIn && profile.contact && profile.contact !== "-"
   const src = profile.imageUrl ?? null
+  const hasDirectContact = isLoggedIn && profile.contact && profile.contact !== "-"
+  const showContact = contactStatus === "APPROVED" || hasDirectContact
+
+  async function handleRequestContact() {
+    if (!profile || requesting) return
+    setRequesting(true)
+    const res = await requestContactAction(profile.userId)
+    setRequesting(false)
+    if (!res.success) {
+      toast.error(res.error)
+      return
+    }
+    setContactStatus("PENDING")
+    toast.success(t("profiles.contactRequested"))
+  }
 
   return (
     <>
@@ -101,7 +136,7 @@ export function ProfileModal({ profile, open, onOpenChange, isLoggedIn, onSendIn
 
               <div className="mt-5">
                 {isLoggedIn ? (
-                  hasContact ? (
+                  showContact && profile.contact ? (
                     <a href={`tel:+91${profile.contact}`} className="flex items-center gap-3 rounded-xl bg-saffron/10 p-4 text-maroon">
                       <Phone className="h-5 w-5 text-saffron" />
                       <div>
@@ -109,8 +144,19 @@ export function ProfileModal({ profile, open, onOpenChange, isLoggedIn, onSendIn
                         <div className="font-bold">+91 {profile.contact}</div>
                       </div>
                     </a>
+                  ) : contactStatus === "PENDING" ? (
+                    <div className="flex items-center gap-3 rounded-xl bg-amber-50 p-4 text-amber-700">
+                      <Clock className="h-5 w-5" />
+                      <div>
+                        <div className="font-bold">{t("modal.contactPending")}</div>
+                        <div className="text-xs">{t("modal.contactPendingDesc")}</div>
+                      </div>
+                    </div>
                   ) : (
-                    <div className="rounded-xl bg-cream-dark p-4 text-sm text-muted-foreground">{t("modal.noContact")}</div>
+                    <Button className="w-full" onClick={handleRequestContact} disabled={requesting}>
+                      <Send className="mr-2 h-4 w-4" />
+                      {requesting ? t("modal.requesting") : t("modal.requestContact")}
+                    </Button>
                   )
                 ) : (
                   <div className="flex items-center gap-3 rounded-xl bg-cream-dark p-4 text-maroon">
@@ -123,11 +169,6 @@ export function ProfileModal({ profile, open, onOpenChange, isLoggedIn, onSendIn
                 )}
               </div>
 
-              {isLoggedIn && onSendInterest && (
-                <Button className="mt-5 w-full" onClick={onSendInterest}>
-                  <Phone className="mr-2 h-4 w-4" /> {t("modal.sendInterest")}
-                </Button>
-              )}
             </div>
           </div>
         </DialogContent>

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { getSession } from "@/lib/auth/session"
 import { approveUser, rejectUser, deleteUserAsAdmin } from "@/lib/services/adminService"
-import { listPendingProfiles } from "@/lib/services/profileService"
+import { listPendingProfiles, listRejectedProfiles, listAllProfiles } from "@/lib/services/profileService"
 
 export async function listPendingRequestsAction() {
   const session = await getSession()
@@ -12,6 +12,24 @@ export async function listPendingRequestsAction() {
   }
   const pending = await listPendingProfiles()
   return { success: true, pending }
+}
+
+export async function listRejectedRequestsAction() {
+  const session = await getSession()
+  if (!session || (session.role !== "ADMIN" && session.role !== "SUPER_ADMIN")) {
+    return { success: false, error: "Forbidden" }
+  }
+  const rejected = await listRejectedProfiles()
+  return { success: true, rejected }
+}
+
+export async function listAllMembersAction() {
+  const session = await getSession()
+  if (!session || (session.role !== "ADMIN" && session.role !== "SUPER_ADMIN")) {
+    return { success: false, error: "Forbidden" }
+  }
+  const members = await listAllProfiles()
+  return { success: true, members }
 }
 
 export async function approveUserAction(userId: number) {

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { MapPin, Calendar, Ruler, Eye, Heart, Lock, ZoomIn } from "lucide-react"
+import { MapPin, Calendar, Ruler, Eye, Phone, Lock, ZoomIn } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { SafeImage } from "@/components/ui/safe-image"
@@ -13,10 +13,10 @@ interface ProfileCardProps {
   profile: PublicProfile
   isLoggedIn: boolean
   onView: () => void
-  onInterest: () => void
+  onRequestContact: () => void
 }
 
-export function ProfileCard({ profile, isLoggedIn, onView, onInterest }: ProfileCardProps) {
+export function ProfileCard({ profile, isLoggedIn, onView, onRequestContact }: ProfileCardProps) {
   const { t } = useLang()
   const [lightbox, setLightbox] = useState(false)
   const src = profile.imageUrl ?? null
@@ -91,9 +91,9 @@ export function ProfileCard({ profile, isLoggedIn, onView, onInterest }: Profile
             <Button variant="outline" className="flex-1" onClick={onView}>
               <Eye className="mr-1 h-4 w-4" /> {t("card.view")}
             </Button>
-            <Button className="flex-1" onClick={onInterest}>
+            <Button className="flex-1" onClick={onRequestContact}>
               {isLoggedIn ? (
-                <><Heart className="mr-1 h-4 w-4" /> {t("card.interest")}</>
+                <><Phone className="mr-1 h-4 w-4" /> {t("card.requestContact")}</>
               ) : (
                 <><Lock className="mr-1 h-4 w-4" /> {t("card.unlock")}</>
               )}
