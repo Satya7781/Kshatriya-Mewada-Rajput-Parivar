@@ -1,0 +1,371 @@
+import { eq, and, ilike, or, desc, asc, sql, type SQL } from "drizzle-orm"
+import { db } from "@/lib/db"
+import { profiles, users, type Profile, type User } from "@/lib/db/schema"
+import { cacheDelete, cacheDeletePattern, cacheGet, cacheSet } from "@/lib/cache"
+import type { ApprovalStatus, ProfileType, PublicProfile } from "@/types"
+
+const PROFILE_KEY = (userId: number) => `profile:${userId}`
+const APPROVED_PROFILES_KEY = "profiles:approved"
+const PENDING_PROFILES_KEY = "profiles:pending"
+const REJECTED_PROFILES_KEY = "profiles:rejected"
+const ALL_PROFILES_KEY = "profiles:all"
+
+export function toPublicProfile(user: User | null, profile: Profile): PublicProfile {
+  return {
+    userId: profile.userId,
+    username: user?.username ?? null,
+    phone: user?.phone ?? null,
+    type: profile.type as ProfileType,
+    bio: profile.bio,
+    visible: profile.visible,
+    approvalStatus: profile.approvalStatus as ApprovalStatus,
+    // Full URLs (R2 CDN) are used as-is; bare filenames fall back to the
+    // local image API route (used by seed data and legacy local uploads).
+    imageUrl: profile.imagePath
+      ? profile.imagePath.startsWith("http")
+        ? profile.imagePath
+        : `/api/profile/image/${profile.imagePath}`
+      : null,
+    dob: profile.dob,
+    height: profile.height,
+    gotraSelf: profile.gotraSelf,
+    gotraMother: profile.gotraMother,
+    education: profile.education,
+    profession: profile.profession,
+    district: profile.district,
+    community: profile.community,
+    fatherName: profile.fatherName,
+    motherName: profile.motherName,
+    address: profile.address,
+    contact: profile.contact,
+    brothers: profile.brothers,
+    sisters: profile.sisters,
+    familyType: profile.familyType,
+    parentsOccupation: profile.parentsOccupation,
+  }
+}
+
+function estimateAge(dob: string | null): number {
+  if (!dob || dob === "-") return 25
+  const d = new Date(dob)
+  if (!isNaN(d.getTime())) {
+    const now = new Date()
+    let age = now.getFullYear() - d.getFullYear()
+    const m = now.getMonth() - d.getMonth()
+    if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--
+    return age
+  }
+  const [year] = dob.split(/[-\/]/).map(Number)
+  if (year > 1900) return new Date().getFullYear() - year
+  return 25
+}
+
+export interface ProfileSearchFilters {
+  gender?: "groom" | "bride" | "all"
+  ageMin?: number
+  ageMax?: number
+  community?: string
+  district?: string
+  gotraQuery?: string
+  gotraExclude?: string
+  keyword?: string
+  verifiedOnly?: boolean
+  heightMinInches?: number
+  sort?: "default" | "ageAsc" | "ageDesc" | "heightAsc" | "heightDesc" | "verifiedFirst"
+  page?: number
+  pageSize?: number
+}
+
+export interface ProfileSearchResult {
+  profiles: PublicProfile[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
+// Convert "5'10\"" -> inches for DB-side height filtering.
+function heightToInches(h: string | null): number {
+  if (!h) return 0
+  const m = h.match(/(\d+)['’]\s*(\d+)/)
+  if (m) return Number(m[1]) * 12 + Number(m[2])
+  const cm = h.match(/(\d+)\s*cm/i)
+  if (cm) return Math.round(Number(cm[1]) / 2.54)
+  return 0
+}
+
+const CURRENT_YEAR = new Date().getFullYear()
+
+/**
+ * Server-side, DB-filtered, paginated profile search. Replaces the old
+ * "load all approved profiles then filter in useMemo" approach so the app
+ * scales beyond ~100 profiles. Builds a WHERE clause from the filters,
+ * applies ORDER BY for the chosen sort, and LIMIT/OFFSET for pagination.
+ */
+export async function searchProfiles(filters: ProfileSearchFilters): Promise<ProfileSearchResult> {
+  const page = Math.max(1, filters.page ?? 1)
+  const pageSize = Math.min(48, Math.max(1, filters.pageSize ?? 12))
+  const offset = (page - 1) * pageSize
+
+  // Admin/super-admin accounts are never listed as matrimonial profiles.
+  const conditions: SQL[] = [
+    eq(profiles.visible, true),
+    eq(profiles.approvalStatus, "APPROVED"),
+    eq(users.role, "USER"),
+  ]
+
+  if (filters.gender && filters.gender !== "all") {
+    conditions.push(eq(profiles.type, filters.gender.toUpperCase() as ProfileType))
+  }
+  if (filters.community && filters.community !== "all") {
+    conditions.push(eq(profiles.community, filters.community))
+  }
+  if (filters.district && filters.district !== "all") {
+    conditions.push(eq(profiles.district, filters.district))
+  }
+  if (filters.gotraQuery) {
+    const q = `%${filters.gotraQuery}%`
+    conditions.push(
+      or(ilike(profiles.gotraSelf, q), ilike(profiles.gotraMother, q)) as SQL
+    )
+  }
+  if (filters.gotraExclude) {
+    const ex = `%${filters.gotraExclude}%`
+    // NOT (gotraSelf ILIKE ex OR gotraMother ILIKE ex)
+    conditions.push(
+      sql`NOT (${ilike(profiles.gotraSelf, ex)} OR ${ilike(profiles.gotraMother, ex)})` as SQL
+    )
+  }
+  if (filters.keyword) {
+    const k = `%${filters.keyword}%`
+    conditions.push(
+      or(ilike(profiles.education, k), ilike(profiles.profession, k)) as SQL
+    )
+  }
+
+  // Age filter via DOB year. dob is a varchar like "1995-08-15" or "15/08/1995".
+  // We filter on the year component; precise day-level age is applied in-memory.
+  const ageMin = filters.ageMin ?? 0
+  const ageMax = filters.ageMax ?? 999
+  if (ageMin > 0 || ageMax < 999) {
+    const maxYear = CURRENT_YEAR - ageMin
+    const minYear = CURRENT_YEAR - ageMax
+    // Extract a 4-digit year from the dob string. Works for ISO and dd/mm/yyyy.
+    conditions.push(
+      sql`(regexp_extract(${profiles.dob}, '[0-9]{4}')::int BETWEEN ${minYear} AND ${maxYear})` as SQL
+    )
+  }
+
+  // Height filter: DB-side compare on a normalized inches expression.
+  if (filters.heightMinInches && filters.heightMinInches > 0) {
+    // Cast feet'inches" to inches in SQL for comparison.
+    conditions.push(
+      sql`(
+        COALESCE(
+          (split_part(${profiles.height}, '''', 1)::int * 12) +
+          NULLIF(regexp_replace(split_part(${profiles.height}, '''', 2), '[^0-9].*$', ''), '')::int,
+          0
+        ) >= ${filters.heightMinInches}
+      )` as SQL
+    )
+  }
+
+  const where = and(...conditions)
+
+  // Count total matching rows for pagination metadata.
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(profiles)
+    .leftJoin(users, eq(profiles.userId, users.id))
+    .where(where)
+
+  // Build ORDER BY from the sort key. Height sort needs the inches expression.
+  const heightInchesExpr = sql`(
+    COALESCE(
+      (split_part(${profiles.height}, '''', 1)::int * 12) +
+      NULLIF(regexp_replace(split_part(${profiles.height}, '''', 2), '[^0-9].*$', ''), '')::int,
+      0
+    )
+  )`
+
+  let orderBy: SQL
+  switch (filters.sort) {
+    case "ageAsc":
+      orderBy = asc(sql`NULLIF(regexp_extract(${profiles.dob}, '[0-9]{4}'), '')::int DESC NULLS LAST`)
+      break
+    case "ageDesc":
+      orderBy = desc(sql`NULLIF(regexp_extract(${profiles.dob}, '[0-9]{4}'), '')::int ASC NULLS LAST`)
+      break
+    case "heightAsc":
+      orderBy = asc(heightInchesExpr)
+      break
+    case "heightDesc":
+      orderBy = desc(heightInchesExpr)
+      break
+    case "verifiedFirst":
+      orderBy = asc(profiles.approvalStatus)
+      break
+    default:
+      orderBy = desc(profiles.createdAt)
+  }
+
+  const rows = await db
+    .select()
+    .from(profiles)
+    .leftJoin(users, eq(profiles.userId, users.id))
+    .where(where)
+    .orderBy(orderBy)
+    .limit(pageSize)
+    .offset(offset)
+
+  const result: PublicProfile[] = rows.map(({ users: userRow, profiles: profile }) => ({
+    ...toPublicProfile(userRow, profile),
+    age: estimateAge(profile.dob),
+  }))
+
+  return {
+    profiles: result,
+    total: Number(count),
+    page,
+    pageSize,
+    totalPages: Math.ceil(Number(count) / pageSize),
+  }
+}
+
+export async function getProfileByUserId(userId: number): Promise<(PublicProfile & { profileId: number }) | undefined> {
+  const cached = cacheGet<PublicProfile & { profileId: number }>(PROFILE_KEY(userId))
+  if (cached) return cached
+
+  const rows = await db
+    .select()
+    .from(profiles)
+    .leftJoin(users, eq(profiles.userId, users.id))
+    .where(eq(profiles.userId, userId))
+    .limit(1)
+
+  if (rows.length === 0) return undefined
+  const { users: userRow, profiles: profile } = rows[0]
+  const publicProfile = { ...toPublicProfile(userRow, profile), profileId: profile.id, age: estimateAge(profile.dob) }
+  cacheSet(PROFILE_KEY(userId), publicProfile)
+  return publicProfile
+}
+
+export async function createProfile(userId: number, data: Partial<Profile>): Promise<Profile> {
+  const [profile] = await db.insert(profiles).values({ userId, ...data } as Profile).returning()
+  cacheDelete(PROFILE_KEY(userId))
+  cacheDelete(APPROVED_PROFILES_KEY)
+  cacheDelete(PENDING_PROFILES_KEY)
+  return profile
+}
+
+export async function updateProfile(userId: number, data: Partial<Profile>): Promise<Profile> {
+  const [profile] = await db.update(profiles).set(data).where(eq(profiles.userId, userId)).returning()
+  cacheDelete(PROFILE_KEY(userId))
+  cacheDelete(APPROVED_PROFILES_KEY)
+  cacheDelete(PENDING_PROFILES_KEY)
+  return profile
+}
+
+export async function updateProfileImage(userId: number, imagePath: string): Promise<Profile> {
+  return updateProfile(userId, { imagePath })
+}
+
+export async function updateApprovalStatus(
+  userId: number,
+  status: ApprovalStatus,
+  visible: boolean
+): Promise<Profile> {
+  const [profile] = await db
+    .update(profiles)
+    .set({ approvalStatus: status, visible })
+    .where(eq(profiles.userId, userId))
+    .returning()
+  cacheDelete(PROFILE_KEY(userId))
+  cacheDelete(APPROVED_PROFILES_KEY)
+  cacheDelete(PENDING_PROFILES_KEY)
+  cacheDeletePattern("stats:")
+  return profile
+}
+
+export async function listApprovedProfiles(): Promise<PublicProfile[]> {
+  const cached = cacheGet<PublicProfile[]>(APPROVED_PROFILES_KEY)
+  if (cached) return cached
+
+  const rows = await db
+    .select()
+    .from(profiles)
+    .leftJoin(users, eq(profiles.userId, users.id))
+    .where(
+      and(
+        eq(profiles.visible, true),
+        eq(profiles.approvalStatus, "APPROVED"),
+        eq(users.role, "USER")
+      )
+    )
+
+  const result = rows.map(({ users: userRow, profiles: profile }) => ({
+    ...toPublicProfile(userRow, profile),
+    age: estimateAge(profile.dob),
+  }))
+  cacheSet(APPROVED_PROFILES_KEY, result, 1000 * 60 * 2)
+  return result
+}
+
+export async function listPendingProfiles(): Promise<PublicProfile[]> {
+  const cached = cacheGet<PublicProfile[]>(PENDING_PROFILES_KEY)
+  if (cached) return cached
+
+  const rows = await db
+    .select()
+    .from(profiles)
+    .leftJoin(users, eq(profiles.userId, users.id))
+    .where(
+      and(
+        eq(profiles.approvalStatus, "PENDING"),
+        eq(users.role, "USER")
+      )
+    )
+
+  const result = rows.map(({ users: userRow, profiles: profile }) => toPublicProfile(userRow, profile))
+  cacheSet(PENDING_PROFILES_KEY, result, 1000 * 60 * 2)
+  return result
+}
+
+export async function listRejectedProfiles(): Promise<PublicProfile[]> {
+  const cached = cacheGet<PublicProfile[]>(REJECTED_PROFILES_KEY)
+  if (cached) return cached
+
+  const rows = await db
+    .select()
+    .from(profiles)
+    .leftJoin(users, eq(profiles.userId, users.id))
+    .where(
+      and(
+        eq(profiles.approvalStatus, "REJECTED"),
+        eq(users.role, "USER")
+      )
+    )
+
+  const result = rows.map(({ users: userRow, profiles: profile }) => toPublicProfile(userRow, profile))
+  cacheSet(REJECTED_PROFILES_KEY, result, 1000 * 60 * 2)
+  return result
+}
+
+export async function listAllProfiles(): Promise<PublicProfile[]> {
+  const cached = cacheGet<PublicProfile[]>(ALL_PROFILES_KEY)
+  if (cached) return cached
+
+  const rows = await db
+    .select()
+    .from(profiles)
+    .leftJoin(users, eq(profiles.userId, users.id))
+    .where(eq(users.role, "USER"))
+    .orderBy(desc(profiles.createdAt))
+
+  const result = rows.map(({ users: userRow, profiles: profile }) => ({
+    ...toPublicProfile(userRow, profile),
+    age: estimateAge(profile.dob),
+  }))
+  cacheSet(ALL_PROFILES_KEY, result, 1000 * 60 * 2)
+  return result
+}
