@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import {
   Shield,
@@ -103,7 +103,7 @@ export function AdminPanel() {
       toast.error(res.error)
       return
     }
-    toast.info(t("admin.rejected"))
+    toast.info(t("admin.rejectedToast"))
     load()
   }
 
@@ -137,7 +137,7 @@ export function AdminPanel() {
     load()
   }
 
-  function matchesSearch(profile: PublicProfile) {
+  const matchesSearch = useCallback((profile: PublicProfile) => {
     const q = query.trim().toLowerCase()
     if (!q) return true
     return (
@@ -147,7 +147,7 @@ export function AdminPanel() {
       (profile.gotraSelf?.toLowerCase().includes(q) ?? false) ||
       (profile.gotraMother?.toLowerCase().includes(q) ?? false)
     )
-  }
+  }, [query])
 
   const filteredMembers = useMemo(() => allMembers.filter(matchesSearch), [allMembers, query])
   const filteredPending = useMemo(() => pendingProfiles.filter(matchesSearch), [pendingProfiles, query])
