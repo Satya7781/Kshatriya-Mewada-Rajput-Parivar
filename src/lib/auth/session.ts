@@ -4,14 +4,20 @@ import { cookies } from "next/headers"
 import { SignJWT, jwtVerify } from "jose"
 import type { SessionUser, Role } from "@/types"
 
-const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
+function getSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    throw new Error("JWT_SECRET is not configured")
+  }
+  return new TextEncoder().encode(secret)
+}
 
 export async function createSession(userId: number, role: Role, phone: string, username: string | null, isApproved: boolean) {
   const token = await new SignJWT({ userId, role, phone, username, isApproved })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
-    .sign(secret)
+    .sign(getSecret())
 
   const cookieStore = await cookies()
   cookieStore.set("session", token, {
@@ -29,6 +35,13 @@ export async function getSession(): Promise<SessionUser | null> {
   const cookieStore = await cookies()
   const token = cookieStore.get("session")?.value
   if (!token) return null
+
+  let secret: Uint8Array
+  try {
+    secret = getSecret()
+  } catch {
+    return null
+  }
 
   try {
     const { payload } = await jwtVerify(token, secret, { algorithms: ["HS256"] })
